@@ -1,0 +1,47 @@
+go mod tidy
+go test ./...
+
+git add -A
+git commit -m "MonGolang changes for v0.1.1"
+git tag v0.1.1
+git push origin v0.1.1
+
+# gophernotes DS not using modules?
+
+# in gophernotes... 
+go get github.com/ddgarrett/mongolang
+go build /go/src/github.com/ddgarrett/mongolang
+go install /go/src/github.com/ddgarrett/mongolang
+
+### scripts to
+# delete src, pkg maybe bin? BEFORE doing above
+# for new mongolang and maybe mongodb drivers
+
+
+###############################################
+use Jupyter 
+- New Terminal
+
+# remove the .a objects
+rm -r /go/pkg/linux_amd64/go.mongodb.org
+rm -r /go/pkg/linux_amd64/github.com/ddgarrett/mongolang.a
+
+# remove the gomacro cached import redirects
+rm -r /go/src/gomacro_imports/go.mongodb.org
+rm -r /go/src/gomacro_imports/github.com/ddgarrett/mongolang
+
+# remove source
+rm -r /go/src/go.mongodb.org/mongo-driver
+rm -r /go/src/github.com/ddgarrett/mongolang
+
+### install everything
+go get go.mongodb.org/mongo-driver/mongo
+go get github.com/ddgarrett/mongolang
+
+go build go.mongodb.org/mongo-driver/bson
+go install go.mongodb.org/mongo-driver/bson
+
+go build go.mongodb.org/mongo-driver/mongo/options
+go install go.mongodb.org/mongo-driver/mongo/options
+
+

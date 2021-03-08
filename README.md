@@ -39,6 +39,17 @@ In Scope:
 
 4. Are people releasing resources efficiently?
 
+
+### With Jupyter Notebook
+Combined with Jupyter Notebook using GopherNotes, this provides a simple interface to run MongoDB Shell like commands using Go. Not only easy to iterate and easy to rerun, but also a great way to prototype code which can then be copied and pasted into a Go program. 
+
+![Example Using MonGolang in Jupyter Notebook](misc/MonGolang_V01.1._Test01.png?raw=true)
+
+
+[See here](https://docs.google.com/presentation/d/1zq8-n0w0uiy9AIK9kaOiZgIL6VEmUc1FBDpbImZ4RLw/edit?usp=sharing) for a brief slide presentation on running MonGolang on Jupyter and then using the code in a standalone compiled Go program.
+
+### Some things not too bad?
+
 For selection criteria maybe not a big deal?
 
 In JavaScript we can write a selection such as this:
@@ -71,4 +82,6 @@ Not too bad with the one caveat that `bson.M` is an *unordered* map. Meaning tha
 
 The problem comes when specifying new documents. In that case you want to preserve the order of the fields to make the document more human readable. Maybe it doesn't matter to computers if the`"_id"` field is the first, the last or somewhere buried in the middle of a large document, but a human expects the `"_id"` field to be at the beginning of the document where it's easy to find.
 
-When inserting new documents you're probably best off doing it via a `struct` in any case. This does **(?)** preserver the order of the fields? (need to check this out)
+
+
+
