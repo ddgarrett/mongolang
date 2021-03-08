@@ -112,7 +112,7 @@ func (c *Cursor) bufferNext() bool {
 // sort, skip, limit - pre-cursor open methods
 
 // Sort specifies the bson.D to be used to sort the cursor results
-func (c *Cursor) Sort(sortSequence bson.D) *Cursor {
+func (c *Cursor) Sort(sortSequence interface{}) *Cursor {
 	if c.IsClosed {
 		c.Err = errors.New("Sort called on closed cursor")
 	} else {
