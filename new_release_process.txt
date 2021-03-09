@@ -4,7 +4,9 @@ go test ./...
 git add -A
 git commit -m "MonGolang changes for v0.1.1"
 git tag v0.1.1
-git push origin v0.1.1
+git push origin --tags
+
+# NO? git push origin v0.1.1
 
 # gophernotes DS not using modules?
 

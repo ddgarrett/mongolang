@@ -7,6 +7,7 @@ package mongolang
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -82,6 +83,8 @@ func (c *Coll) Find(parms ...interface{}) *Cursor {
 // Aggregate returns a cursor for an aggregation pipeline operation
 func (c *Coll) Aggregate(parms ...interface{}) *Cursor {
 	result := c.NewCursor()
+	result.AggrPipeline = []bson.D{}
 
+	fmt.Println("in new Aggregate v0.2.0")
 	return result
 }
