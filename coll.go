@@ -79,7 +79,8 @@ func (c *Coll) Find(parms ...interface{}) *Cursor {
 	return result
 }
 
-func (c *Coll) Aggregation(parms ...interface{}) *Cursor {
+// Aggregate returns a cursor for an aggregation pipeline operation
+func (c *Coll) Aggregate(parms ...interface{}) *Cursor {
 	result := c.NewCursor()
 
 	return result

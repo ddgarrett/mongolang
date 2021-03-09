@@ -69,6 +69,8 @@ func (c *Cursor) Close() error {
 	return c.Err
 }
 
+// getMongoCursor ensures that we have an open MongoDB Cursor.
+// If the cursor is currently nil, creates a new Find or Aggregate cursor.
 func (c *Cursor) getMongoCursor() error {
 
 	if c.MongoCursor == nil {
