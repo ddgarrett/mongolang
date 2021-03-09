@@ -22,6 +22,9 @@ go install /go/src/github.com/ddgarrett/mongolang
 use Jupyter 
 - New Terminal
 
+NOTE: on the Jupyter container, go packages are installed at /go/pkg.
+Source is kept at /go/src/.
+
 # remove the .a objects
 rm -r /go/pkg/linux_amd64/go.mongodb.org
 rm -r /go/pkg/linux_amd64/github.com/ddgarrett/mongolang.a

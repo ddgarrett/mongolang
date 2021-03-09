@@ -15,9 +15,11 @@ import (
 // NewCursor creates a new cursor for this collection
 func (c *Coll) NewCursor() *Cursor {
 	result := Cursor{
-		Collection: c,
-		IsClosed:   true,
-		Options:    options.FindOptions{},
+		Collection:   c,
+		IsClosed:     true,
+		IsFindCursor: false,
+		FindOptions:  options.FindOptions{},
+		AggrOptions:  options.AggregateOptions{},
 	}
 
 	return &result
@@ -28,6 +30,7 @@ func (c *Coll) NewCursor() *Cursor {
 // are recognized:
 // 	parms[0] - query - bson.M or bson.D defines of which documents to select
 //  parms[1] - projection - bson.M or bson.D defines which fields to retrieve
+// TODO: process projection parms
 func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 
 	//TODO: add processing of project parm
@@ -53,11 +56,13 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 // are recognized:
 // 	parms[0] - query - bson.M defines of which documents to select
 //  parms[1] - projection - bson.D defines which fields to retrieve
+// TODO: process projection parms
 func (c *Coll) Find(parms ...interface{}) *Cursor {
 
 	//TODO: add processing of project parm
 
 	result := c.NewCursor()
+	result.IsFindCursor = true
 	result.IsClosed = false
 
 	if len(parms) > 0 {
@@ -70,6 +75,12 @@ func (c *Coll) Find(parms ...interface{}) *Cursor {
 	} else {
 		result.Filter = &bson.M{}
 	}
+
+	return result
+}
+
+func (c *Coll) Aggregation(parms ...interface{}) *Cursor {
+	result := c.NewCursor()
 
 	return result
 }

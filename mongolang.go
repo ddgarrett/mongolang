@@ -39,14 +39,18 @@ type Coll struct {
 
 // Cursor represents a cursor for a Collection
 type Cursor struct {
-	Collection  *Coll
-	MongoCursor *mongo.Cursor
-	IsClosed    bool
+	Collection   *Coll
+	MongoCursor  *mongo.Cursor
+	IsClosed     bool
+	IsFindCursor bool
 
 	Err error
 
 	NextDoc *bson.D
 
-	Filter  *bson.M
-	Options options.FindOptions
+	Filter      *bson.M
+	FindOptions options.FindOptions
+
+	AggrPipeline []bson.D
+	AggrOptions  options.AggregateOptions
 }

@@ -27,7 +27,7 @@ package mongolang
 	HasNext() and Next() will access the next document in the cursor (if one exists).
 	If no next document exists, the cursor will be closed.
 	IsClosed() returns true if the cursor is closed.
-	All others will close the cursor.
+	All others will close the cursor after reading all of the documents for the cursor.
 	Once the cursor is closed any attempt to use it will cause a panic.
 
 */
@@ -54,14 +54,42 @@ func (c *Cursor) Close() error {
 		}
 
 		c.IsClosed = true
+
 		c.NextDoc = nil
+
 		c.Filter = nil
-		c.Options = options.FindOptions{}
+		c.FindOptions = options.FindOptions{}
+
+		c.AggrPipeline = nil
+		c.AggrOptions = options.AggregateOptions{}
 	} else {
 		c.Err = errors.New("Close called on already closed cursor")
 	}
 
 	return c.Err
+}
+
+func (c *Cursor) getMongoCursor() error {
+
+	if c.MongoCursor == nil {
+		var err error
+		if c.IsFindCursor {
+			c.MongoCursor, err = c.Collection.MongoColl.Find(context.Background(), c.Filter, &c.FindOptions)
+		} else {
+			c.MongoCursor, err = c.Collection.MongoColl.Aggregate(context.Background(), c.AggrPipeline, &c.AggrOptions)
+		}
+
+		// mark as not closed here so that if error, c.Close() reinitializes cursor
+		c.IsClosed = false
+
+		if err != nil {
+			c.Close()
+			c.Err = err
+			return err
+		}
+
+	}
+	return nil
 }
 
 // bufferNext reads the next document, if it exists, into the Cursor buffer.
@@ -73,17 +101,10 @@ func (c *Cursor) bufferNext() bool {
 		panic("internal error: bufferNext() called after cursor closed")
 	}
 
-	if c.MongoCursor == nil {
-		cursor, err := c.Collection.MongoColl.Find(context.Background(), c.Filter, &c.Options)
-		c.IsClosed = false
+	err := c.getMongoCursor()
 
-		if err != nil {
-			c.Close()
-			c.Err = err
-			return false
-		}
-
-		c.MongoCursor = cursor
+	if err != nil {
+		return false
 	}
 
 	hasNext := c.MongoCursor.Next(context.Background())
@@ -94,7 +115,7 @@ func (c *Cursor) bufferNext() bool {
 	}
 
 	c.NextDoc = &bson.D{}
-	err := c.MongoCursor.Decode(c.NextDoc)
+	err = c.MongoCursor.Decode(c.NextDoc)
 
 	if err != nil {
 		c.Close()
@@ -110,13 +131,18 @@ func (c *Cursor) bufferNext() bool {
 }
 
 // sort, skip, limit - pre-cursor open methods
+//
+// NOT allowed on aggregate cursor
 
 // Sort specifies the bson.D to be used to sort the cursor results
 func (c *Cursor) Sort(sortSequence interface{}) *Cursor {
 	if c.IsClosed {
 		c.Err = errors.New("Sort called on closed cursor")
+	} else if !c.IsFindCursor {
+		c.Err = errors.New("Sort called on aggregation cursor")
+		c.Close()
 	} else {
-		c.Options.Sort = &sortSequence
+		c.FindOptions.Sort = &sortSequence
 	}
 
 	return c
@@ -126,8 +152,11 @@ func (c *Cursor) Sort(sortSequence interface{}) *Cursor {
 func (c *Cursor) Skip(skipCount int64) *Cursor {
 	if c.IsClosed {
 		c.Err = errors.New("Skip called on closed cursor")
+	} else if !c.IsFindCursor {
+		c.Err = errors.New("Skip called on aggregation cursor")
+		c.Close()
 	} else {
-		c.Options.Skip = &skipCount
+		c.FindOptions.Skip = &skipCount
 	}
 
 	return c
@@ -137,9 +166,12 @@ func (c *Cursor) Skip(skipCount int64) *Cursor {
 func (c *Cursor) Limit(limitCount int64) *Cursor {
 	if c.IsClosed {
 		c.Err = errors.New("Limit called on closed cursor")
+	} else if !c.IsFindCursor {
+		c.Err = errors.New("Limit called on aggregation cursor")
+		c.Close()
 	} else {
 		c.Err = nil
-		c.Options.Limit = &limitCount
+		c.FindOptions.Limit = &limitCount
 	}
 
 	return c
@@ -196,6 +228,12 @@ func (c *Cursor) Next() *bson.D {
 
 */
 
+// ForEach calls the specified function once for each remaining cursor document
+// passing the function a bson.D document.
+func (c *Cursor) ForEach(f func(*bson.D)) {
+	fmt.Println("ForEach(...) not yet implemented")
+}
+
 // ToArray returns all of the remaining documents for a cursor
 // in an array.
 func (c *Cursor) ToArray() []bson.D {
@@ -206,35 +244,19 @@ func (c *Cursor) ToArray() []bson.D {
 		return result
 	}
 
-	if c.MongoCursor == nil {
-		cursor, err := c.Collection.MongoColl.Find(context.Background(), c.Filter, &c.Options)
+	err := c.getMongoCursor()
 
-		if err != nil {
-			c.Close()
-			c.Err = err
-			return result
-		}
-
-		c.MongoCursor = cursor
-		c.IsClosed = false
+	if err != nil {
+		return result
 	}
 
-	err := c.MongoCursor.All(context.Background(), &result)
+	err = c.MongoCursor.All(context.Background(), &result)
 
 	c.MongoCursor = nil
 	c.Close()
 	c.Err = err
 
 	return result
-}
-
-// String fulfills the Stringer interface.
-// Calling this will return a string containing the "pretty" print
-// contents of the ToArray() function. That function returns an array
-// with all of the documents remaining for the cursor and closes the cursor.
-func (c *Cursor) String() string {
-	json, _ := json.MarshalIndent(c.ToArray(), "", "  ")
-	return string(json)
 }
 
 // Count returns a count of the (remaining) documents for the cursor.
@@ -256,4 +278,13 @@ func (c *Cursor) Pretty() string {
 	}
 
 	return buf.String()
+}
+
+// String fulfills the Stringer interface.
+// Calling this will return a string containing the "pretty" print
+// contents of the ToArray() function. ToArray() returns an array
+// with all of the documents remaining for the cursor and closes the cursor.
+func (c *Cursor) String() string {
+	json, _ := json.MarshalIndent(c.ToArray(), "", "  ")
+	return string(json)
 }
