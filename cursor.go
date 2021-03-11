@@ -30,6 +30,8 @@ package mongolang
 	All others will close the cursor after reading all of the documents for the cursor.
 	Once the cursor is closed any attempt to use it will cause a panic.
 
+	TODO: methods which read the remaining documents should check to see if one was buffered via
+	a HasNext()
 */
 
 import (

@@ -51,6 +51,6 @@ type Cursor struct {
 	Filter      *bson.M
 	FindOptions options.FindOptions
 
-	AggrPipeline []bson.D
+	AggrPipeline interface{}
 	AggrOptions  options.AggregateOptions
 }

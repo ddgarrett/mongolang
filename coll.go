@@ -7,6 +7,7 @@ package mongolang
 import (
 	"context"
 	"errors"
+
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -61,6 +62,7 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 func (c *Coll) Find(parms ...interface{}) *Cursor {
 
 	//TODO: add processing of project parm
+	//TODO: what to do if incorrect type of parm passed? Maybe return nil?
 
 	result := c.NewCursor()
 	result.IsFindCursor = true
@@ -80,11 +82,79 @@ func (c *Coll) Find(parms ...interface{}) *Cursor {
 	return result
 }
 
-// Aggregate returns a cursor for an aggregation pipeline operation
-func (c *Coll) Aggregate(parms ...interface{}) *Cursor {
-	result := c.NewCursor()
-	result.AggrPipeline = []bson.D{}
+// Aggregate returns a cursor for an aggregation pipeline operation.
+// The pipeline passed can be one of: []bson.D, bson.A, string
+// If bson.A, each entry must be a bson.D
+// If string, must be a valid JSON doc that parses to a valid bson.A
+func (c *Coll) Aggregate(pipeline interface{}, parms ...interface{}) *Cursor {
 
-	fmt.Println("in new Aggregate v0.2.0")
+	//TODO: process other parms
+	//TODO: what to do if incorrect type of parm passed? Maybe return nil?
+
+	result := c.NewCursor()
+	result.IsFindCursor = false
+	result.IsClosed = false
+
+	realPipeline, err := getPipeline(&pipeline)
+	c.Err = err
+	c.DB.Err = err
+
+	result.AggrPipeline = realPipeline
+
 	return result
+}
+
+// given an input aggregation pipeline interface,
+// convert it to a []bson.D
+func getPipeline(in *interface{}) (interface{}, error) {
+	switch v := (*in).(type) {
+	case []bson.D:
+		// fmt.Println("getPipeline found []bson.D")
+		return v, nil
+	case bson.A:
+		// fmt.Println("getPipeline found bson.A")
+		return converBSONAPipeline(v)
+	case string:
+		// fmt.Println("getPipeline found string")
+		return parseJSONPipeline(v)
+	default:
+		// fmt.Println("getPipeline found unrecognized type")
+		err := fmt.Errorf("Invalid parm %T, expected []bson.D, bson.A or JSON string", v)
+		fmt.Println(err)
+		return nil, err
+	}
+}
+
+// Convert bson.A to []bson.D
+// Error if not every entry in bson.A is a bson.D
+func converBSONAPipeline(input bson.A) ([]bson.D, error) {
+	result := []bson.D{}
+
+	for _, entry := range input {
+		switch v := entry.(type) {
+		case bson.D:
+			result = append(result, entry.(bson.D))
+		default:
+			// fmt.Println("error in type of bson.A entry in converBSONAPipeline")
+			err := fmt.Errorf("Converting bson.A to []bson.D, found type %T", v)
+			return result, err
+		}
+	}
+	return result, nil
+}
+
+// Convert a JSON string to an aggregation pipeline []bson.D
+func parseJSONPipeline(in string) ([]bson.D, error) {
+	parser := JSONToBSON{}
+	parser.ParseJSON(in)
+
+	if parser.Err != nil {
+		return nil, parser.Err
+	}
+
+	if parser.IsBSOND {
+		return nil, errors.New("Pipeline string not a bson.A (array")
+	}
+
+	return converBSONAPipeline(parser.BSONA)
 }
