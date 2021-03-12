@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -56,7 +55,7 @@ func (j *JSONToBSON) ParseJSON(jsonStr string) (interface{}, error) {
 
 		}
 	default:
-		j.Err = errors.Errorf("unrecognized or invalid type %T value %v", j.token, j.token)
+		j.Err = fmt.Errorf("unrecognized or invalid type %T value %v", j.token, j.token)
 		return nil, j.Err
 	}
 
@@ -96,11 +95,11 @@ func (j *JSONToBSON) parseNameValue() (bson.D, error) {
 				return result, j.Err
 			} else {
 				// didn't find the expected "}" delimiter
-				j.Err = errors.Errorf("looking key:value pair, found type %T value %v", j.token, j.token)
+				j.Err = fmt.Errorf("looking key:value pair, found type %T value %v", j.token, j.token)
 				return result, j.Err
 			}
 		default:
-			j.Err = errors.Errorf("looking key:value pair, found type %T value %v", j.token, j.token)
+			j.Err = fmt.Errorf("looking key:value pair, found type %T value %v", j.token, j.token)
 			return result, j.Err
 		}
 	}
@@ -135,7 +134,7 @@ func (j *JSONToBSON) parseValue() (interface{}, error) {
 
 	}
 
-	j.Err = errors.Errorf("looking for a json value or bson.E or bson.A, found %T value %v", j.token, j.token)
+	j.Err = fmt.Errorf("looking for a json value or bson.E or bson.A, found %T value %v", j.token, j.token)
 	return nil, j.Err
 }
 
