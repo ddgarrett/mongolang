@@ -37,7 +37,7 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 
 	//TODO: add processing of project parm
 
-	filter := convertBSONParm(0, parms)
+	filter := convertBSONParm(0, parms...)
 
 	result := c.MongoColl.FindOne(context.Background(), filter)
 	c.DB.Err = result.Err()
