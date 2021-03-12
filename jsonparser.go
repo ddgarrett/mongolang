@@ -26,6 +26,30 @@ type JSONToBSON struct {
 	BSONA bson.A
 }
 
+// LastJSONToBSON contains the last instance of this struct
+// created in ParseJSONToBSON. This is in case caller wants to
+// check the Err or other values before using the parser results.
+var LastJSONToBSON JSONToBSON
+
+// ParseJSONToBSON is a convenience function that creates a new
+// JSONToBSON struct then uses it to convert the input JSON string
+// to a bson.A or bson.D struct.
+// Warning... any errors are ignored, but...
+// if there is an error, the error is returned. This should cause a later
+// error if used in place of a bson struct.
+// In a single user TEST environment, caller can also check LastJSONToBSON
+func ParseJSONToBSON(jsonStr string) interface{} {
+	s := JSONToBSON{}
+	result, err := s.ParseJSON(jsonStr)
+	LastJSONToBSON = s // for caller error checking
+
+	if err != nil {
+		fmt.Printf("error in ParseJSONToBSON: %v \n", err)
+		return err
+	}
+	return result
+}
+
 // ParseJSON parses JSON strings
 // to create a bson.D or bson.A struct
 func (j *JSONToBSON) ParseJSON(jsonStr string) (interface{}, error) {
