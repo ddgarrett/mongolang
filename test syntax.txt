@@ -1,1 +1,12 @@
 # README.md
+
+load csv and tsv files:
+
+
+sudo cp 01-Jan-2020_to_01-Jan-2021.csv /data/db/scripts
+mongoimport -d quickstart -c amazon --type csv --headerline --file /data/db/scripts/01-Jan-2020_to_01-Jan-2021.csv
+
+
+rm /data/db/scripts/amazon_data.tsv
+sudo cp Amazon_Purchases_2020.tsv  /data/db/scripts
+mongoimport -d quickstart -c amazon2 --type tsv --headerline --file /data/db/scripts/Amazon_Purchases_2020.tsv
