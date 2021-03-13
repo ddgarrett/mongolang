@@ -17,7 +17,7 @@ import (
 // i = index to array of parms
 // parms = variable number of parms which can be bson.M or bson.D interfaces
 //
-// bson.D{} interface is returned if parm is not a bson.M or bson.D
+// Empty bson.D{} interface is returned if parm is not a bson.M or bson.D
 func convertBSONParm(i int, parms ...interface{}) interface{} {
 
 	if len(parms) > i && parms[i] != nil {
