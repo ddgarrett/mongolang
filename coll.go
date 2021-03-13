@@ -46,7 +46,13 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 		}
 	}
 
-	result := c.MongoColl.FindOne(context.Background(), filter)
+	findOneOptions := options.FindOneOptions{}
+	if len(parms) > 1 {
+		findOneOptions.Projection, c.Err = verifyParm(parms[1], (bsonDAllowed | bsonMAllowed))
+		c.DB.Err = c.Err
+	}
+
+	result := c.MongoColl.FindOne(context.Background(), filter, &findOneOptions)
 	c.DB.Err = result.Err()
 	c.Err = result.Err()
 
@@ -68,9 +74,6 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 // TODO: process projection parms
 func (c *Coll) Find(parms ...interface{}) *Cursor {
 
-	//TODO: add processing of project parm
-	//TODO: what to do if incorrect type of parm passed? Maybe return nil?
-
 	result := c.NewCursor()
 	result.IsFindCursor = true
 	result.IsClosed = false
@@ -86,6 +89,11 @@ func (c *Coll) Find(parms ...interface{}) *Cursor {
 		}
 	} else {
 		result.Filter = bson.D{}
+	}
+
+	if len(parms) > 1 {
+		result.FindOptions.Projection, c.Err = verifyParm(parms[1], (bsonDAllowed | bsonMAllowed))
+		c.DB.Err = c.Err
 	}
 
 	return result

@@ -140,13 +140,14 @@ func (c *Cursor) bufferNext() bool {
 
 // Sort specifies the bson.D to be used to sort the cursor results
 func (c *Cursor) Sort(sortSequence interface{}) *Cursor {
+
 	if c.IsClosed {
 		c.Err = errors.New("Sort called on closed cursor")
 	} else if !c.IsFindCursor {
 		c.Err = errors.New("Sort called on aggregation cursor")
 		c.Close()
 	} else {
-		c.FindOptions.Sort = &sortSequence
+		c.FindOptions.Sort, c.Err = verifyParm(sortSequence, (bsonDAllowed | bsonMAllowed))
 	}
 
 	return c
