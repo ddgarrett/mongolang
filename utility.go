@@ -2,6 +2,7 @@ package mongolang
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,30 +11,6 @@ import (
 /*
 	Miscellaneous methods that are not related to a struct
 */
-
-// convertBSONParm converts an entry in an array of interface{}
-// to either a bson.M or bson.D interface.
-//
-// i = index to array of parms
-// parms = variable number of parms which can be bson.M or bson.D interfaces
-//
-// Empty bson.D{} interface is returned if parm is not a bson.M or bson.D
-func convertBSONParm(i int, parms ...interface{}) interface{} {
-
-	if len(parms) > i && parms[i] != nil {
-		parm := parms[i]
-
-		switch parm := parm.(type) {
-		case nil:
-			return bson.D{}
-		case bson.D, bson.M:
-			return parm
-		default:
-			return bson.D{}
-		}
-	}
-	return bson.D{}
-}
 
 // PrintStruct prints an interface object
 // as "pretty" json
@@ -78,4 +55,77 @@ func PrintBSONM(doc *bson.M, pretty ...bool) {
 	} else {
 		fmt.Printf("%#v \n", doc)
 	}
+}
+
+// Allowed Types Flags
+// Used to build a uint32 passed to verifyParm.
+// Example, to verify that parm is bson.D or bson.M:
+//		verifyParm(parm,(bsonDAllowed|bsonMAllowed))
+const (
+	bsonDAllowed      = 1 // bit 1
+	bsonMAllowed      = 2 // bit 2
+	bsonAAllowed      = 4 // bit 3
+	bsonDSliceAllowed = 8 // bit 4
+)
+
+// Verify the type of a parameter based on allowedTypesFlags.
+// In two cases will convert from one type to another:
+//   1. If parm is a bson.D and bson.D is not allowed
+//		but a bson.A is allowed,
+//      will return the bson.D wrapped in a bson.A or []bson.D
+//   2. If nil passed, will return an empty bson.D, bson.A, or bson.M
+//      if one of those is allowed.
+func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
+
+	switch p := parm.(type) {
+	case string: // parse strings
+		s := JSONToBSON{}
+		result, err := s.ParseJSON(p)
+
+		if err != nil {
+			fmt.Printf("error in ParseJSONToBSON: %v \n", err)
+			return nil, err
+		}
+
+		parm = result
+	}
+
+	switch parm.(type) {
+	case nil:
+		if allowedTypes&bsonDAllowed != 0 {
+			return bson.D{}, nil
+		}
+		if allowedTypes&bsonAAllowed != 0 {
+			return bson.A{}, nil
+		}
+		if allowedTypes&bsonMAllowed != 0 {
+			return bson.M{}, nil
+		}
+		return parm, errors.New("nil parm without suitable default type")
+
+	case bson.D:
+		if allowedTypes&bsonDAllowed != 0 {
+			return parm, nil
+		}
+		if allowedTypes&bsonAAllowed != 0 {
+			return bson.A{parm}, nil
+		}
+
+	case bson.M:
+		if allowedTypes&bsonMAllowed != 0 {
+			return parm, nil
+		}
+
+	case bson.A:
+		if allowedTypes&bsonAAllowed != 0 {
+			return parm, nil
+		}
+
+	case []bson.D:
+		if allowedTypes&bsonDSliceAllowed != 0 {
+			return parm, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Invalid parm type: %T", parm)
 }

@@ -6,7 +6,6 @@ package mongolang
 
 import (
 	"context"
-	"errors"
 
 	"fmt"
 
@@ -37,7 +36,15 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 
 	//TODO: add processing of project parm
 
-	filter := convertBSONParm(0, parms...)
+	var filter interface{}
+
+	if len(parms) > 0 {
+		filter, c.Err = verifyParm(parms[0], bsonDAllowed|bsonMAllowed)
+		c.DB.Err = c.Err
+		if c.Err != nil {
+			return &bson.D{}
+		}
+	}
 
 	result := c.MongoColl.FindOne(context.Background(), filter)
 	c.DB.Err = result.Err()
@@ -69,14 +76,16 @@ func (c *Coll) Find(parms ...interface{}) *Cursor {
 	result.IsClosed = false
 
 	if len(parms) > 0 {
-		filter := convertBSONParm(0, parms...)
-		if f, ok := filter.(bson.M); ok {
-			result.Filter = &f
-		} else {
-			result.Err = errors.New("Invalid filter. Expected bson.M ")
+		result.Filter, c.Err = verifyParm(parms[0], (bsonDAllowed | bsonMAllowed))
+		c.DB.Err = c.Err
+		if c.Err != nil {
+			// will cause a later error
+			// if Find() is chained
+			// or c.Err/c.DB.Err is not checked
+			return nil
 		}
 	} else {
-		result.Filter = &bson.M{}
+		result.Filter = bson.D{}
 	}
 
 	return result
@@ -95,11 +104,8 @@ func (c *Coll) Aggregate(pipeline interface{}, parms ...interface{}) *Cursor {
 	result.IsFindCursor = false
 	result.IsClosed = false
 
-	realPipeline, err := getPipeline(&pipeline)
-	c.Err = err
-	c.DB.Err = err
-
-	result.AggrPipeline = realPipeline
+	result.AggrPipeline, c.Err = verifyParm(pipeline, (bsonAAllowed | bsonDSliceAllowed))
+	c.DB.Err = c.Err
 
 	return result
 }

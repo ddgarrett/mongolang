@@ -48,7 +48,7 @@ type Cursor struct {
 
 	NextDoc *bson.D
 
-	Filter      *bson.M
+	Filter      interface{}
 	FindOptions options.FindOptions
 
 	AggrPipeline interface{}
