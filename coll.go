@@ -69,7 +69,7 @@ func (c *Coll) Find(parms ...interface{}) *Cursor {
 	result.IsClosed = false
 
 	if len(parms) > 0 {
-		filter := convertBSONParm(0, parms)
+		filter := convertBSONParm(0, parms...)
 		if f, ok := filter.(bson.M); ok {
 			result.Filter = &f
 		} else {
@@ -105,17 +105,14 @@ func (c *Coll) Aggregate(pipeline interface{}, parms ...interface{}) *Cursor {
 }
 
 // given an input aggregation pipeline interface,
-// convert it to a []bson.D
+// convert it to a []bson.D or bson.A
 func getPipeline(in *interface{}) (interface{}, error) {
 	switch v := (*in).(type) {
 	case []bson.D:
-		// fmt.Println("getPipeline found []bson.D")
 		return v, nil
 	case bson.A:
-		// fmt.Println("getPipeline found bson.A")
-		return converBSONAPipeline(v)
+		return v, nil
 	case string:
-		// fmt.Println("getPipeline found string")
 		return parseJSONPipeline(v)
 	default:
 		// fmt.Println("getPipeline found unrecognized type")
@@ -125,26 +122,9 @@ func getPipeline(in *interface{}) (interface{}, error) {
 	}
 }
 
-// Convert bson.A to []bson.D
-// Error if not every entry in bson.A is a bson.D
-func converBSONAPipeline(input bson.A) ([]bson.D, error) {
-	result := []bson.D{}
-
-	for _, entry := range input {
-		switch v := entry.(type) {
-		case bson.D:
-			result = append(result, entry.(bson.D))
-		default:
-			// fmt.Println("error in type of bson.A entry in converBSONAPipeline")
-			err := fmt.Errorf("Converting bson.A to []bson.D, found type %T", v)
-			return result, err
-		}
-	}
-	return result, nil
-}
-
 // Convert a JSON string to an aggregation pipeline []bson.D
-func parseJSONPipeline(in string) ([]bson.D, error) {
+// or bson.A
+func parseJSONPipeline(in string) (interface{}, error) {
 	parser := JSONToBSON{}
 	parser.ParseJSON(in)
 
@@ -153,8 +133,8 @@ func parseJSONPipeline(in string) ([]bson.D, error) {
 	}
 
 	if parser.IsBSOND {
-		return nil, errors.New("Pipeline string not a bson.A (array")
+		return []bson.D{parser.BSOND}, nil
 	}
 
-	return converBSONAPipeline(parser.BSONA)
+	return parser.BSONA, nil
 }
