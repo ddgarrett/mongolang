@@ -127,5 +127,5 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Invalid parm type: %T", parm)
+	return nil, fmt.Errorf("invalid parm type: %T", parm)
 }
