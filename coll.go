@@ -7,8 +7,6 @@ package mongolang
 import (
 	"context"
 
-	"fmt"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -116,39 +114,4 @@ func (c *Coll) Aggregate(pipeline interface{}, parms ...interface{}) *Cursor {
 	c.DB.Err = c.Err
 
 	return result
-}
-
-// given an input aggregation pipeline interface,
-// convert it to a []bson.D or bson.A
-func getPipeline(in *interface{}) (interface{}, error) {
-	switch v := (*in).(type) {
-	case []bson.D:
-		return v, nil
-	case bson.A:
-		return v, nil
-	case string:
-		return parseJSONPipeline(v)
-	default:
-		// fmt.Println("getPipeline found unrecognized type")
-		err := fmt.Errorf("Invalid parm %T, expected []bson.D, bson.A or JSON string", v)
-		fmt.Println(err)
-		return nil, err
-	}
-}
-
-// Convert a JSON string to an aggregation pipeline []bson.D
-// or bson.A
-func parseJSONPipeline(in string) (interface{}, error) {
-	parser := JSONToBSON{}
-	parser.ParseJSON(in)
-
-	if parser.Err != nil {
-		return nil, parser.Err
-	}
-
-	if parser.IsBSOND {
-		return []bson.D{parser.BSOND}, nil
-	}
-
-	return parser.BSONA, nil
 }
