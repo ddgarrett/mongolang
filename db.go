@@ -7,6 +7,7 @@ package mongolang
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -19,9 +20,6 @@ import (
 // Disconnect disconnects the MongoDB and
 // cleans up any other resources, resetting the MonGolang structure
 func (mg *DB) Disconnect() {
-	if mg == nil {
-		return
-	}
 
 	mg.Err = nil
 
@@ -37,11 +35,7 @@ func (mg *DB) Disconnect() {
 // InitMonGolang initializes the connection
 // to the MongoDB Database
 func (mg *DB) InitMonGolang(connectionURI string) *DB {
-	if mg == nil {
-		mg = new(DB)
-	} else {
-		mg.Disconnect()
-	}
+	mg.Disconnect()
 
 	// get MongoDB Client
 	mg.Client, mg.Err = mongo.NewClient(options.Client().ApplyURI(connectionURI))
@@ -60,8 +54,9 @@ func (mg *DB) InitMonGolang(connectionURI string) *DB {
 // Use connects the MongoDB Client to the specified Database.
 // The MonGolangDB needs to be inialized via mg.InitMonGolang() before calling this method.
 func (mg *DB) Use(dbName string) *DB {
-	if mg == nil || mg.Client == nil {
-		return mg
+	if mg.Client == nil {
+		mg.Err = errors.New("not connected to a MongoDB")
+		return nil
 	}
 
 	mg.Name = dbName
@@ -80,6 +75,11 @@ func (mg *DB) Coll(collectionName string) *Coll {
 
 // ShowDBs returns a list of Database Names
 func (mg *DB) ShowDBs() []string {
+	if mg.Client == nil {
+		var result []string
+		return result
+	}
+
 	databases, err := mg.Client.ListDatabaseNames(context.Background(), bson.M{})
 	mg.Err = err
 
