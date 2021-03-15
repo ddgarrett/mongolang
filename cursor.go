@@ -267,7 +267,7 @@ func (c *Cursor) ToArray(parm ...interface{}) []bson.D {
 	if len(parm) > 0 {
 		err = c.MongoCursor.All(context.Background(), parm[0])
 	} else {
-		err = c.MongoCursor.All(context.Background(), result)
+		err = c.MongoCursor.All(context.Background(), &result)
 	}
 
 	c.MongoCursor = nil
