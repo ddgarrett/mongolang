@@ -68,3 +68,16 @@ func ExampleFind() {
 	// result has 3 zipcodes. Largest zip code in CA: BELL GARDENS, 90201 with population of 99,568
 
 }
+
+func ExampleFindOne() {
+	db := DB{}
+	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+
+	result := db.Coll("zips").
+		FindOne(`{"state":"CA", "pop":{"$gt":1000}}`, `{"loc":0}`)
+
+	fmt.Println("CA zip: ", result)
+
+	// output:
+	// CA zip:  &[{_id 90002} {city LOS ANGELES} {pop 40629} {state CA}]
+}
