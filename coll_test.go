@@ -44,7 +44,7 @@ func ExampleAggregate() {
 
 }
 
-func ExampleFindOne() {
+func ExampleFind() {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
 
