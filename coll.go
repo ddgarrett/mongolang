@@ -30,9 +30,6 @@ func (c *Coll) NewCursor() *Cursor {
 // 	parms[0] - query - bson.M or bson.D defines of which documents to select
 //  parms[1] - projection - bson.M or bson.D defines which fields to retrieve
 func (c *Coll) FindOne(parms ...interface{}) *bson.D {
-
-	//TODO: add processing of project parm
-
 	var filter interface{}
 
 	if len(parms) > 0 {
