@@ -16,7 +16,7 @@ import (
 // as "pretty" json
 func PrintStruct(s interface{}) {
 	json, _ := json.MarshalIndent(s, "", "  ")
-	fmt.Printf("data:\n%s\n", json)
+	fmt.Printf("%s\n", json)
 }
 
 // PrintBSOND prints a single bson document.
