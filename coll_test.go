@@ -52,7 +52,11 @@ func ExampleFind() {
 		Find(`{"state":"CA", "pop":{"$gt":1000}}`, `{"loc":0}`).
 		Sort(`{"pop":-1}`).Limit(3)
 
-	fmt.Println("largest: ", cursor.Next())
+	if cursor.HasNext() {
+		fmt.Println("largest: ", cursor.Next())
+	}
+
+	fmt.Println(cursor.Next())
 
 	var r []bson.M
 	cursor.ToArray(&r)
@@ -65,6 +69,7 @@ func ExampleFind() {
 
 	// output:
 	// largest:  &[{_id 90201} {city BELL GARDENS} {pop 99568} {state CA}]
+	// &[{_id 90011} {city LOS ANGELES} {pop 96074} {state CA}]
 	// result has 3 zipcodes. Largest zip code in CA: BELL GARDENS, 90201 with population of 99,568
 
 }
