@@ -6,7 +6,42 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func TestVerifyParms(t *testing.T) {
+func ExamplePrintStruct() {
+	// bsonD := bson.D{{Key: "bsonDKey", Value: "bsonDValue"}}
+	bsonD := bson.D{{Key: "bsonDKey", Value: "bsonDValue"}}
+	PrintStruct(bsonD)
+	// output:
+	// [
+	//   {
+	//     "Key": "bsonDKey",
+	//     "Value": "bsonDValue"
+	//   }
+	// ]
+
+}
+
+func ExamplePrintBSOND() {
+	bsonD := bson.D{{Key: "bsonDKey", Value: "bsonDValue"}}
+	PrintBSOND(&bsonD, false)
+	// output: &[{bsonDKey bsonDValue}]
+}
+
+func TestPrintBSOND(t *testing.T) {
+	bsonD := bson.D{{Key: "bsonDKey", Value: "bsonDValue"}}
+	PrintBSOND(&bsonD)
+}
+func ExamplePrintBSONM() {
+	bsonM := bson.M{"bsonDKey": "bsonDValue"}
+	PrintBSONM(&bsonM, false)
+	// output: &primitive.M{"bsonDKey":"bsonDValue"}
+}
+
+func TestPrintBSONM(t *testing.T) {
+	bsonM := bson.M{"bsonDKey": "bsonDValue"}
+	PrintBSONM(&bsonM)
+}
+
+func TestVerifyParmsPart01(t *testing.T) {
 	bsonD := bson.D{{Key: "bsonDKey", Value: "bsonDValue"}}
 	bsonM := bson.M{"bsonMKey": "bsonMValue"}
 	// bsonA := bson.A{bsonD, bsonM}
@@ -67,4 +102,51 @@ func TestVerifyParms(t *testing.T) {
 		t.Errorf("TestVerifyParms t07 parm: %v, type: %T, error: %v", parm, parm, err)
 	}
 
+	// Test that verify bson.M works
+	parm, err = verifyParm(bsonM, bsonMAllowed)
+	_, okType = parm.(bson.M)
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParms t089 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
+	// Test that verify bson.D slice works
+	bsonDSlice := []bson.D{}
+	parm, err = verifyParm(bsonDSlice, bsonDSliceAllowed)
+	_, okType = parm.([]bson.D)
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParms t089 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+}
+
+func TestVerifyParmsNil(t *testing.T) {
+	// Test cases where input parm is nil
+
+	var nilParm interface{} = nil
+
+	// Test that verify bson.D works
+	parm, err := verifyParm(nilParm, bsonDAllowed)
+	_, okType := parm.(bson.D)
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParmsNil t01 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
+	// Test that verify bson.M works
+	parm, err = verifyParm(nilParm, bsonAAllowed)
+	_, okType = parm.(bson.A)
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParmsNil t02 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
+	// Test that verify bson.A works
+	parm, err = verifyParm(nilParm, bsonMAllowed)
+	_, okType = parm.(bson.M)
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParmsNil t03 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
+	// Test that invalid nil parm is caught
+	parm, err = verifyParm(nilParm, 0)
+	if parm != nil || err == nil {
+		t.Errorf("TestVerifyParmsNil t04 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
 }
