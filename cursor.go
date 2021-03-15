@@ -241,7 +241,8 @@ func (c *Cursor) ForEach(f func(*bson.D)) {
 }
 
 // ToArray returns all of the remaining documents for a cursor
-// in a bson.D slice.
+// in a bson.D slice. NOTE: currently seems to return all docs
+// even those already read via a cursor.Next() call.
 // Optional parm is a pointer to a slice which typically would contain
 // a custom struct or []bson.A slice. In this case, ToArray returns an
 // empty []bson.D slice.
