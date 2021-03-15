@@ -204,6 +204,7 @@ func (c *Cursor) HasNext() bool {
 }
 
 // Next returns the next document for the cursor as a bson.D struct.
+// TODO: allow a struct to be passed similar to cursor.ToArray(...)
 func (c *Cursor) Next() *bson.D {
 	if c.IsClosed {
 		c.Err = errors.New("Next() called on closed cursor")
@@ -240,8 +241,15 @@ func (c *Cursor) ForEach(f func(*bson.D)) {
 }
 
 // ToArray returns all of the remaining documents for a cursor
-// in an array.
-func (c *Cursor) ToArray() []bson.D {
+// in a bson.D slice.
+// Optional parm is a pointer to a slice which typically would contain
+// a custom struct or []bson.A slice. In this case, ToArray returns an
+// empty []bson.D slice.
+// This may change at some future date but currently it is difficult
+// to deal with a slice of any type. For consistency with Mongo Shell
+// ToArray should return an slice. However we also need the ability
+// to return all of the
+func (c *Cursor) ToArray(parm ...interface{}) []bson.D {
 	result := []bson.D{}
 
 	if c.IsClosed {
@@ -255,7 +263,11 @@ func (c *Cursor) ToArray() []bson.D {
 		return result
 	}
 
-	err = c.MongoCursor.All(context.Background(), &result)
+	if len(parm) > 0 {
+		err = c.MongoCursor.All(context.Background(), parm[0])
+	} else {
+		err = c.MongoCursor.All(context.Background(), result)
+	}
 
 	c.MongoCursor = nil
 	c.Close()
