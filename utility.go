@@ -47,11 +47,11 @@ func PrintBSONM(doc *bson.M, pretty ...bool) {
 		prettyPrint = pretty[0]
 	}
 	if prettyPrint {
-		fmt.Printf("\n{ \n")
+		fmt.Printf("{ \n")
 		for k, v := range *doc {
 			fmt.Printf("    %s : %v \n", k, v)
 		}
-		fmt.Printf("} \n\n")
+		fmt.Printf("} \n")
 	} else {
 		fmt.Printf("%#v \n", doc)
 	}
