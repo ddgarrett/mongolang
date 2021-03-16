@@ -32,5 +32,7 @@ Combined with  [Jupyter Notebook and GopherNotes](https://github.com/gopherdata/
 
 [See here](https://docs.google.com/presentation/d/1zq8-n0w0uiy9AIK9kaOiZgIL6VEmUc1FBDpbImZ4RLw/edit?usp=sharing) for a brief slide presentation on running MonGolang on Jupyter and then using the code in a standalone compiled Go program.
 
+There is a PDF demo of the use of MonGolang in Jupyter in this repo at [main/MonGolang_v0.2.1_Demo.pdf] (https://github.com/ddgarrett/mongolang/blob/main/MonGolang_v0.2.1_Demo.pdf) 
+
 
 
