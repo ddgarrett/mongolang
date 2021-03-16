@@ -10,35 +10,9 @@ Create a framework which supports the 10% of the calls which are needed 90% of t
 1. Support the 10% of the calls which are used 90% of the time
 2. The other 90% of the calls which are used 10% of the time should be no more difficult to do then without this framework
 3. Calls should resemble the calls made via the MongoDB Console
-4. Although error checking is important, it shouldn't get in the way of being able to chain calls such as `db.coll("someCollection").find(bson.M{"lastName":"Johnson"}).sort(bson.A{})limit(10)
-6. Don't extend the capabilities of the MongoDB Golang driver, just simplify the use of what's there
-7. New MongoDB releases should not require changes to the framework
-
-Accordingly, the following are outside scope:
-1. Connection pools
-2. Simplification of calls for less used capabilities:
-   1. Batch Insert
-   2. Create Index
-   3. Drop Collection
-   4. ... more?
-3. 
-
-
-In Scope:
-1. List calls from MongoDB Console
-2. xxx
-
-
-### Problem with Using Golang with MongoDB
-
-1. Use of context, when and how
-2. Lots of "cruft" with use of context and error checking
-3. Confusion over use of bson.M vs bson.D
-  * Use bson.M for everything except insert of documents or other rare instances where order of fields matters, such as sort order?
-  * Use bson.D for project, aggregation pipeline steps
-
-4. Are people releasing resources efficiently?
-
+4. Although error checking is important, it shouldn't get in the way of being able to chain calls such as `db.Coll("someCollection").Find(``{"lastName":"Johnson"}``).Sort('{"lastName":1}).Limit(5).Pretty()`
+5. Don't extend the capabilities of the MongoDB Golang driver, just simplify the use of what's there
+6. New MongoDB releases should not require changes to the framework
 
 ### With Jupyter Notebook
 Combined with Jupyter Notebook using GopherNotes, this provides a simple interface to run MongoDB Shell like commands using Go. Not only easy to iterate and easy to rerun, but also a great way to prototype code which can then be copied and pasted into a Go program. 
