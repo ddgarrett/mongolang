@@ -10,7 +10,7 @@ Create a framework which supports the 10% of the calls which are needed 90% of t
 1. Support the 10% of the calls which are used 90% of the time
 2. The other 90% of the calls which are used 10% of the time should be no more difficult to do then without this framework
 3. Calls should resemble the calls made via the MongoDB Console
-4. Although error checking is important, it shouldn't get in the way of being able to chain calls such as
+4. Although error checking is important, it shouldn't get in the way of being able to chain calls such as:
    
     ```go
       db.Coll("someCollection").
@@ -24,47 +24,13 @@ Create a framework which supports the 10% of the calls which are needed 90% of t
 6. New MongoDB releases should not require changes to the framework
 
 ### With Jupyter Notebook
-Combined with  [Jupyter Notebook and GopherNotes](https://github.com/gopherdata/gophernotes), this provides a simple interface to run MongoDB Shell like commands using Go. Not only easy to iterate and easy to rerun, but also a great way to prototype code which can then be copied and pasted into a Go program. 
+Combined with  [Jupyter Notebook and GopherNotes](https://github.com/gopherdata/gophernotes), this provides a simple interface to run MongoDB Shell like commands using Go. Not only easy to iterate and easy to rerun, but also a great way to prototype code which can then be copied and pasted into a Go program. Below is an example query in Juptyter notebook using JSON strings.
 
-![Example Using MonGolang in Jupyter Notebook](misc/MonGolang_V01.1._Test01.png?raw=true)
+![Example 01 Using MonGolang in Jupyter Notebook](misc/MonGolang_V02.1._Test01.png?raw=true)
+![Example 02 Using MonGolang in Jupyter Notebook](misc/MonGolang_V02.1._Test02.png?raw=true)
 
 
 [See here](https://docs.google.com/presentation/d/1zq8-n0w0uiy9AIK9kaOiZgIL6VEmUc1FBDpbImZ4RLw/edit?usp=sharing) for a brief slide presentation on running MonGolang on Jupyter and then using the code in a standalone compiled Go program.
-
-### Some things not too bad?
-
-For selection criteria maybe not a big deal?
-
-In JavaScript we can write a selection such as this:
-
-
-```javascript
-  var favorites = ["Sandra Bullock","Tom Hanks","Julia Roberts",
-              "Kevin Spacey","George Clooney"]
-
-  var selection = {"countries" : "USA",
-                  "tomatoes.viewer.rating" : {"$gte":3},
-                  "cast": {"$in":favorites} }
-
-```
-
-In golang this would be:
-
-```go
-
-	favorites := bson.A{"Sandra Bullock", "Tom Hanks", "Julia Roberts",
-		"Kevin Spacey", "George Clooney"}
-
-	selection := bson.M{"countries": "USA",
-		"tomatoes.viewer.rating": bson.M{"$gte": 3},
-		"cast": bson.M{"$in": favorites}}
-
-```
-
-Not too bad with the one caveat that `bson.M` is an *unordered* map. Meaning that the order of the entries in the map are random. This isn't a problem when specifying search criteria and similar parameters. 
-
-The problem comes when specifying new documents. In that case you want to preserve the order of the fields to make the document more human readable. Maybe it doesn't matter to computers if the`"_id"` field is the first, the last or somewhere buried in the middle of a large document, but a human expects the `"_id"` field to be at the beginning of the document where it's easy to find.
-
 
 
 
