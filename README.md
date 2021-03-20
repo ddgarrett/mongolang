@@ -5,10 +5,10 @@
 ### Goal
 
 Simplify Go programs which use MongoDB.
-Create a framework which supports the 10% of the calls which are needed 90% of the time, while easily allowing the use of the other 90% of MongoDB capabilities which are needed 10% of the time.
+Create a library which supports the 10% of the calls which are needed 90% of the time, while easily allowing the use of the other 90% of MongoDB capabilities which are needed 10% of the time.
 
 1. Support the 10% of the calls which are used 90% of the time
-2. The other 90% of the calls which are used 10% of the time should be no more difficult to do then without this framework
+2. The other 90% of the calls which are used 10% of the time should be no more difficult to do then without this library
 3. Calls should resemble the calls made via the MongoDB Console
 4. Although error checking is important, it shouldn't get in the way of being able to chain calls such as:
    
@@ -21,7 +21,7 @@ Create a framework which supports the 10% of the calls which are needed 90% of t
     ```
 
 5. Don't extend the capabilities of the MongoDB Golang driver, just simplify the use of what's there
-6. New MongoDB releases should not require changes to the framework
+6. New MongoDB releases should not require changes to the library or programs that use the library.
 
 ### With Jupyter Notebook
 Combined with  [Jupyter Notebook and GopherNotes](https://github.com/gopherdata/gophernotes), this provides a simple interface to run MongoDB Shell like commands using Go. Not only easy to iterate and easy to rerun, but also a great way to prototype code which can then be copied and pasted into a Go program. Below is an example query in Juptyter notebook using JSON strings.
