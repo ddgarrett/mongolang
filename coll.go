@@ -38,6 +38,8 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 		if c.Err != nil {
 			return &bson.D{}
 		}
+	} else {
+		filter = bson.D{}
 	}
 
 	findOneOptions := options.FindOneOptions{}

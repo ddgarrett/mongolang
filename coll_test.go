@@ -2,8 +2,10 @@ package mongolang
 
 import (
 	"fmt"
+	"testing"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/text/message"
 )
 
@@ -79,10 +81,21 @@ func ExampleFindOne() {
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
 
 	result := db.Coll("zips").
-		FindOne(`{"state":"CA", "pop":{"$gt":1000}}`, `{"loc":0}`)
+		FindOne(`{"_id":"90002"}`, `{"loc":0}`)
 
 	fmt.Println("CA zip: ", result)
 
 	// output:
 	// CA zip:  &[{_id 90002} {city LOS ANGELES} {pop 40629} {state CA}]
+}
+
+func TestFindOne(t *testing.T) {
+	db := DB{}
+	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	result := db.Coll("zips").FindOne()
+
+	resultE := ([]primitive.E)(*result)
+	if len(resultE) != 5 {
+		t.Errorf("TestFindOne expected to find a doc with 5 fields instead of %d field(s)", len(resultE))
+	}
 }
