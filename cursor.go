@@ -244,12 +244,13 @@ func (c *Cursor) ForEach(f func(*bson.D)) {
 // in a bson.D slice. NOTE: currently seems to return all docs
 // even those already read via a cursor.Next() call.
 // Optional parm is a pointer to a slice which typically would contain
-// a custom struct or []bson.A slice. In this case, ToArray returns an
+// a custom struct or bson.A struct. In this case, ToArray returns an
 // empty []bson.D slice.
 // This may change at some future date but currently it is difficult
 // to deal with a slice of any type. For consistency with Mongo Shell
-// ToArray should return an slice. However we also need the ability
-// to return all of the
+// ToArray should return a slice. However we also need the ability
+// to return all of the documents to a slice which is a custom struct
+// or a bson.A struct.
 func (c *Cursor) ToArray(parm ...interface{}) []bson.D {
 	result := []bson.D{}
 
