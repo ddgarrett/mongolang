@@ -67,7 +67,6 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 // are recognized:
 // 	parms[0] - query - bson.M defines of which documents to select
 //  parms[1] - projection - bson.D defines which fields to retrieve
-// TODO: process projection parms
 func (c *Coll) Find(parms ...interface{}) *Cursor {
 
 	result := c.NewCursor()
