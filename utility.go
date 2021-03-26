@@ -79,8 +79,9 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 
 	switch p := parm.(type) {
 	case string: // parse strings
-		s := JSONToBSON{}
-		result, err := s.ParseJSON(p)
+		var result interface{}
+
+		err := bson.UnmarshalExtJSON([]byte(p), true, &result)
 
 		if err != nil {
 			fmt.Printf("error in ParseJSONToBSON: %v \n", err)
