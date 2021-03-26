@@ -69,12 +69,14 @@ const (
 )
 
 // Verify the type of a parameter based on allowedTypesFlags.
-// In two cases will convert from one type to another:
+// In some cases will convert from one type to another:
 //   1. If parm is a bson.D and bson.D is not allowed
 //		but a bson.A is allowed,
 //      will return the bson.D wrapped in a bson.A or []bson.D
 //   2. If nil passed, will return an empty bson.D, bson.A, or bson.M
 //      if one of those is allowed.
+//   3. If a string is passed, will assume it is an extended JSON string
+//      and call bson.UnmarshalExtJSON to parse the JSON string.
 func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 
 	switch p := parm.(type) {
