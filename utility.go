@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -17,44 +18,6 @@ import (
 func PrintStruct(s interface{}) {
 	json, _ := json.MarshalIndent(s, "", "  ")
 	fmt.Printf("%s\n", json)
-}
-
-// PrintBSOND prints a single bson document.
-//
-// Default is to print JSON in a pretty format
-// (one field per line). This can be overridden by passing
-// a "pretty" parameter value of false
-func PrintBSOND(doc *bson.D, pretty ...bool) {
-	prettyPrint := true
-	if len(pretty) > 0 {
-		prettyPrint = pretty[0]
-	}
-	if prettyPrint {
-		fmt.Printf("\n{ \n")
-		for _, v := range *doc {
-			fmt.Printf("    %s : %v \n", v.Key, v.Value)
-		}
-		fmt.Printf("} \n\n")
-	} else {
-		fmt.Printf("%v \n", doc)
-	}
-}
-
-// PrintBSONM Prints a bson.M document
-func PrintBSONM(doc *bson.M, pretty ...bool) {
-	prettyPrint := true
-	if len(pretty) > 0 {
-		prettyPrint = pretty[0]
-	}
-	if prettyPrint {
-		fmt.Printf("{ \n")
-		for k, v := range *doc {
-			fmt.Printf("    %s : %v \n", k, v)
-		}
-		fmt.Printf("} \n")
-	} else {
-		fmt.Printf("%#v \n", doc)
-	}
 }
 
 // Allowed Types Flags
@@ -131,4 +94,109 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 	}
 
 	return nil, fmt.Errorf("invalid parm type: %T", parm)
+}
+
+type printBSONParms struct {
+	indent      int
+	prevBracket bool
+}
+
+// PrintBSON prints formatted BSON structures,
+// optionally with the value type.
+func PrintBSON(parm interface{}) {
+
+	parms := printBSONParms{0, false}
+
+	parms.printBSON(parm)
+
+}
+
+// NOTE: returns true if parm was a BSON type
+func (p *printBSONParms) printBSON(parm interface{}) (isBSON bool) {
+
+	switch pt := parm.(type) {
+	case bson.E:
+		p.printBSONE(pt)
+	case bson.D:
+		p.printBSOND(pt)
+	case bson.A:
+		p.printBSONA(pt)
+	default:
+		s := fmt.Sprintf("%v", pt)
+		if len(s) > 40 {
+			s = s[:30] + "..."
+		}
+		fmt.Printf("%v", s)
+		return false
+	}
+
+	return true
+}
+
+func (p *printBSONParms) printIndent() {
+	fmt.Println()
+	fmt.Printf("%*s", p.indent*3, " ")
+}
+
+func (p *printBSONParms) printBSONE(parm bson.E) {
+
+	p.prevBracket = false
+
+	tString := fmt.Sprintf("%T", parm.Value)
+	tString = strings.TrimPrefix(tString, "primitive.")
+
+	p.printIndent()
+
+	fmt.Printf("%s (%s): ", parm.Key, tString)
+
+	p.printBSON(parm.Value)
+	p.prevBracket = false
+}
+
+func (p *printBSONParms) printBSOND(parm bson.D) {
+
+	if p.prevBracket {
+		fmt.Printf(",")
+		p.printIndent()
+	}
+
+	fmt.Printf("{")
+	p.indent++
+	p.prevBracket = false
+
+	for _, v := range parm {
+		p.printBSON(v)
+	}
+
+	p.indent--
+	p.printIndent()
+	fmt.Printf("}")
+	p.prevBracket = true
+}
+
+func (p *printBSONParms) printBSONA(parm bson.A) {
+	// printIndent(indent)
+	fmt.Printf("[")
+	p.indent++
+	p.prevBracket = false
+
+	// An array of BSON objects is printed one object per line
+	// but an array of elementary items is printed on a single
+	// line, separated by ', '
+	isBSON := false
+	lastParmIndex := len(parm) - 1
+	for i, v := range parm {
+		isBSON = p.printBSON(v)
+		if !isBSON && i != lastParmIndex {
+			fmt.Printf(", ")
+		}
+	}
+
+	p.indent--
+
+	if isBSON {
+		p.printIndent()
+	}
+	fmt.Printf("]")
+	p.prevBracket = false
 }

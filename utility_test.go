@@ -20,27 +20,6 @@ func ExamplePrintStruct() {
 
 }
 
-func ExamplePrintBSOND() {
-	bsonD := bson.D{{Key: "bsonDKey", Value: "bsonDValue"}}
-	PrintBSOND(&bsonD, false)
-	// output: &[{bsonDKey bsonDValue}]
-}
-
-func TestPrintBSOND(t *testing.T) {
-	bsonD := bson.D{{Key: "bsonDKey", Value: "bsonDValue"}}
-	PrintBSOND(&bsonD)
-}
-func ExamplePrintBSONM() {
-	bsonM := bson.M{"bsonDKey": "bsonDValue"}
-	PrintBSONM(&bsonM, false)
-	// output: &primitive.M{"bsonDKey":"bsonDValue"}
-}
-
-func TestPrintBSONM(t *testing.T) {
-	bsonM := bson.M{"bsonDKey": "bsonDValue"}
-	PrintBSONM(&bsonM)
-}
-
 func TestVerifyParmsPart01(t *testing.T) {
 	bsonD := bson.D{{Key: "bsonDKey", Value: "bsonDValue"}}
 	bsonM := bson.M{"bsonMKey": "bsonMValue"}
@@ -149,4 +128,48 @@ func TestVerifyParmsNil(t *testing.T) {
 	if parm != nil || err == nil {
 		t.Errorf("TestVerifyParmsNil t04 parm: %v, type: %T, error: %v", parm, parm, err)
 	}
+}
+
+func ExamplePrintBSON() {
+	pipeline := `[
+        { "$match" : {"_id" : {"$oid":"5bf36072a5820f6e28a4736c"} }},
+		{ "$test" : "field that will be truncated because of length" },
+		{ "$test" : ["an array", "of text", "values"]},
+		{ "$test" : [{"array": "of"}, {"objects": 2}]},
+		{ "$limit": 3 }
+	]`
+
+	var doc interface{}
+	err := bson.UnmarshalExtJSON([]byte(pipeline), true, &doc)
+	if err != nil {
+		panic(err)
+	}
+
+	PrintBSON(doc)
+
+	// output:
+	// [{
+	//       $match (D): {
+	//          _id (ObjectID): ObjectID("5bf36072a5820f6e28a4736c")
+	//       }
+	//    },
+	//    {
+	//       $test (string): field that will be truncated b...
+	//    },
+	//    {
+	//       $test (A): [an array, of text, values]
+	//    },
+	//    {
+	//       $test (A): [{
+	//             array (string): of
+	//          },
+	//          {
+	//             objects (int32): 2
+	//          }
+	//       ]
+	//    },
+	//    {
+	//       $limit (int32): 3
+	//    }
+	//  ]
 }
