@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -108,6 +109,22 @@ func (c *Coll) Aggregate(pipeline interface{}, parms ...interface{}) *Cursor {
 	result.IsClosed = false
 
 	result.AggrPipeline, c.Err = verifyParm(pipeline, (bsonAAllowed | bsonDSliceAllowed))
+	c.DB.Err = c.Err
+
+	return result
+}
+
+func (c *Coll) InsertOne(document interface{}, parms ...interface{}) *mongo.InsertOneResult {
+
+	insertDocument, err := verifyParm(document, bsonDAllowed|bsonMAllowed)
+	c.Err = err
+	c.DB.Err = c.Err
+	if c.Err != nil {
+		return &mongo.InsertOneResult{}
+	}
+
+	result, insertErr := c.MongoColl.InsertOne(context.Background(), insertDocument)
+	c.Err = insertErr
 	c.DB.Err = c.Err
 
 	return result

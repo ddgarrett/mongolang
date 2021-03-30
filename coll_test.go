@@ -22,6 +22,7 @@ type cityStatePop struct {
 func ExampleAggregate() {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	defer db.Disconnect()
 
 	// Three largest cities
 	pipeline := `[
@@ -43,12 +44,12 @@ func ExampleAggregate() {
 		len(r), r[0].ID.City, r[0].ID.State, r[0].Pop)
 
 	// output: result has 3 cities. Largest is: CHICAGO, IL with population of 2,452,177
-
 }
 
 func ExampleFind() {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	defer db.Disconnect()
 
 	cursor := db.Coll("zips").
 		Find(`{"state":"CA", "pop":{"$gt":1000}}`, `{"loc":0}`).
@@ -79,6 +80,7 @@ func ExampleFind() {
 func ExampleFindOne() {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	defer db.Disconnect()
 
 	result := db.Coll("zips").
 		FindOne(`{"_id":"90002"}`, `{"loc":0}`)
@@ -92,10 +94,43 @@ func ExampleFindOne() {
 func TestFindOne(t *testing.T) {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	defer db.Disconnect()
 	result := db.Coll("zips").FindOne()
 
 	resultE := ([]primitive.E)(*result)
 	if len(resultE) != 5 {
 		t.Errorf("TestFindOne expected to find a doc with 5 fields instead of %d field(s)", len(resultE))
 	}
+}
+func TestInsertOne(t *testing.T) {
+	db := DB{}
+	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	defer db.Disconnect()
+
+	insertDocJSON := `{
+		"title": "The Polyglot Developer Podcast",
+		"author": "Nic Raboy",
+		"tags": ["development", "programming", "coding"] }`
+
+	result := db.Coll("testCollection").InsertOne(insertDocJSON)
+
+	if db.Err != nil {
+		t.Errorf("TestInsertOne insert error %v", db.Err)
+	}
+
+	searchKey := bson.M{"_id": result.InsertedID}
+	insertedDoc := []bson.M{}
+	db.Coll("testCollection").Find(searchKey).ToArray(&insertedDoc)
+
+	if len(insertedDoc) == 0 {
+		t.Errorf("TestInsertOne unable to read inserted doc with %v", searchKey)
+	}
+
+	author, foundAuthor := insertedDoc[0]["author"]
+
+	if !foundAuthor || author != "Nic Raboy" {
+		t.Errorf("TestInsertOne didn't find inserted author of Nic Raboy")
+	}
+
+	// TODO: delete inserted document or drop collection
 }
