@@ -8,6 +8,7 @@ import (
 func TestSkip(t *testing.T) {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	defer db.Disconnect()
 
 	result := db.Coll("zips").
 		Find(`{"state":"CA"}`, `{"loc":0}`).Sort(`{"pop":-1}`).Skip(2).
@@ -24,6 +25,7 @@ func TestSkip(t *testing.T) {
 func TestCount(t *testing.T) {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	defer db.Disconnect()
 
 	count := db.Coll("zips").
 		Find(`{"state":"CA"}`).Count()
@@ -37,6 +39,7 @@ func TestCount(t *testing.T) {
 func TestString(t *testing.T) {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	defer db.Disconnect()
 
 	result := db.Coll("zips").
 		Find(`{"state":"CA"}`, `{"loc":0}`).Sort(`{"pop":-1}`).Skip(2).
