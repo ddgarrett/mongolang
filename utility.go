@@ -148,6 +148,8 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 			for i, v := range p {
 				r2[i] = (interface{})(v)
 			}
+
+			return r2, nil
 		}
 	}
 
