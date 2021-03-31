@@ -56,7 +56,7 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 		parm = result
 	}
 
-	switch parm.(type) {
+	switch p := parm.(type) {
 	case nil:
 		if allowedTypes&bsonDAllowed != 0 {
 			return bson.D{}, nil
@@ -85,6 +85,23 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 	case bson.A:
 		if allowedTypes&bsonAAllowed != 0 {
 			return parm, nil
+		}
+
+		if allowedTypes&bsonDSliceAllowed != 0 {
+			invalidSubtype := false
+			r2 := make([]bson.D, 0, len(p))
+			for _, v := range p {
+				v2, ok := v.(bson.D)
+				if !ok {
+					invalidSubtype = true
+				} else {
+					r2 = append(r2, v2)
+				}
+			}
+
+			if !invalidSubtype {
+				return r2, nil
+			}
 		}
 
 	case []bson.D:
