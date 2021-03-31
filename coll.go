@@ -114,7 +114,10 @@ func (c *Coll) Aggregate(pipeline interface{}, parms ...interface{}) *Cursor {
 	return result
 }
 
-func (c *Coll) InsertOne(document interface{}, parms ...interface{}) *mongo.InsertOneResult {
+// InsertOne inserts one document into the Collection.
+// Filter must be a bson.D or bson.M.
+// TODO: implement insert one options
+func (c *Coll) InsertOne(document interface{}, opts ...interface{}) *mongo.InsertOneResult {
 
 	insertDocument, err := verifyParm(document, bsonDAllowed|bsonMAllowed)
 	c.Err = err
@@ -125,6 +128,25 @@ func (c *Coll) InsertOne(document interface{}, parms ...interface{}) *mongo.Inse
 
 	result, insertErr := c.MongoColl.InsertOne(context.Background(), insertDocument)
 	c.Err = insertErr
+	c.DB.Err = c.Err
+
+	return result
+}
+
+// DeleteOne deletes a single document. Note that the filter need not specify a
+// single document but only one document will be deleted.
+// TODO: implement delete options.
+func (c *Coll) DeleteOne(filter interface{}, opts ...interface{}) *mongo.DeleteResult {
+
+	deleteFilter, err := verifyParm(filter, bsonDAllowed|bsonMAllowed)
+	c.Err = err
+	c.DB.Err = c.Err
+	if c.Err != nil {
+		return &mongo.DeleteResult{}
+	}
+
+	result, deleteErr := c.MongoColl.DeleteOne(context.Background(), deleteFilter)
+	c.Err = deleteErr
 	c.DB.Err = c.Err
 
 	return result

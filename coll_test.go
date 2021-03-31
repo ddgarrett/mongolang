@@ -126,11 +126,19 @@ func TestInsertOne(t *testing.T) {
 		t.Errorf("TestInsertOne unable to read inserted doc with %v", searchKey)
 	}
 
-	author, foundAuthor := insertedDoc[0]["author"]
+	title, foundAuthor := insertedDoc[0]["title"]
 
-	if !foundAuthor || author != "Nic Raboy" {
-		t.Errorf("TestInsertOne didn't find inserted author of Nic Raboy")
+	if !foundAuthor || title != "The Polyglot Developer Podcast" {
+		t.Errorf("TestInsertOne didn't find inserted title The Polyglot Developer Podcast")
 	}
 
-	// TODO: delete inserted document or drop collection
+	deleteResult := db.Coll("testCollection").DeleteOne(searchKey)
+
+	if db.Err != nil {
+		t.Errorf("TestInsertOne delete error %v", db.Err)
+	}
+
+	if deleteResult.DeletedCount != 1 {
+		t.Errorf("TestInsertOne delete count of %d", deleteResult.DeletedCount)
+	}
 }
