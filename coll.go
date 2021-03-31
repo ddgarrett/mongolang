@@ -138,22 +138,14 @@ func (c *Coll) InsertOne(document interface{}, opts ...interface{}) *mongo.Inser
 // TODO: implement insert one options
 func (c *Coll) InsertMany(documents interface{}, opts ...interface{}) *mongo.InsertManyResult {
 
-	insertDocuments, parmErr := verifyParm(documents, bsonDSliceAllowed)
+	insertDocuments, parmErr := verifyParm(documents, interfaceSliceAllowed)
 	c.Err = parmErr
 	c.DB.Err = c.Err
 	if c.Err != nil {
 		return &mongo.InsertManyResult{}
 	}
 
-	// Convert a bson.D slice to an interface{} slice
-	// Shouldn't have to do this? There may be a better way to do this?
-	// TODO: incorporate this into verifyParm(...)
-	bd, _ := insertDocuments.([]bson.D)
-	iDocs := make([]interface{}, 0, len(bd))
-	for _, v := range bd {
-		iDocs = append(iDocs, v)
-	}
-
+	iDocs := insertDocuments.([]interface{})
 	result, insertErr := c.MongoColl.InsertMany(context.Background(), iDocs)
 	c.Err = insertErr
 	c.DB.Err = c.Err

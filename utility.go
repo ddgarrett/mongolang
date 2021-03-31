@@ -25,19 +25,22 @@ func PrintStruct(s interface{}) {
 // Example, to verify that parm is bson.D or bson.M:
 //		verifyParm(parm,(bsonDAllowed|bsonMAllowed))
 const (
-	bsonDAllowed      = 1 // bit 1
-	bsonMAllowed      = 2 // bit 2
-	bsonAAllowed      = 4 // bit 3
-	bsonDSliceAllowed = 8 // bit 4
+	bsonDAllowed          = 1  // bit 1
+	bsonMAllowed          = 2  // bit 2
+	bsonAAllowed          = 4  // bit 3
+	bsonDSliceAllowed     = 8  // bit 4
+	interfaceSliceAllowed = 16 // bit 5 - []interface{}
 )
 
 // Verify the type of a parameter based on allowedTypesFlags.
 // In some cases will convert from one type to another:
 //   1. If parm is a bson.D and bson.D is not allowed
-//		but a bson.A is allowed,
-//      will return the bson.D wrapped in a bson.A or []bson.D
-//   2. If nil passed, will return an empty bson.D, bson.A, or bson.M
-//      if one of those is allowed.
+//		but a bson.A, bson.D slice, or interface{} slice is allowed,
+//      will return the bson.D wrapped in a one of those.
+//	 2. If parms is a bson.A and bson.A is not allowed
+//      but bson.D slice or interface
+//   2. If nil passed, will return an empty bson.D, bson.A, bson.M,
+//      bson.D slice or interface{} slice if one of those is allowed.
 //   3. If a string is passed, will assume it is an extended JSON string
 //      and call bson.UnmarshalExtJSON to parse the JSON string.
 func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
@@ -67,6 +70,12 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 		if allowedTypes&bsonMAllowed != 0 {
 			return bson.M{}, nil
 		}
+		if allowedTypes&bsonDSliceAllowed != 0 {
+			return make([]bson.D, 0), nil
+		}
+		if allowedTypes&interfaceSliceAllowed != 0 {
+			return make([]interface{}, 0), nil
+		}
 		return parm, errors.New("nil parm without suitable default type")
 
 	case bson.D:
@@ -74,7 +83,15 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 			return parm, nil
 		}
 		if allowedTypes&bsonAAllowed != 0 {
-			return bson.A{parm}, nil
+			return bson.A{p}, nil
+		}
+		if allowedTypes&bsonDSliceAllowed != 0 {
+			return []bson.D{p}, nil
+		}
+		if allowedTypes&interfaceSliceAllowed != 0 {
+			result := make([]interface{}, 1)
+			result[0] = parm
+			return result, nil
 		}
 
 	case bson.M:
@@ -89,13 +106,30 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 
 		if allowedTypes&bsonDSliceAllowed != 0 {
 			invalidSubtype := false
-			r2 := make([]bson.D, 0, len(p))
-			for _, v := range p {
+			r2 := make([]bson.D, len(p))
+			for i, v := range p {
 				v2, ok := v.(bson.D)
 				if !ok {
 					invalidSubtype = true
 				} else {
-					r2 = append(r2, v2)
+					r2[i] = v2
+				}
+			}
+
+			if !invalidSubtype {
+				return r2, nil
+			}
+		}
+
+		if allowedTypes&interfaceSliceAllowed != 0 {
+			invalidSubtype := false
+			r2 := make([]interface{}, len(p))
+			for i, v := range p {
+				v2, ok := v.(interface{})
+				if !ok {
+					invalidSubtype = true
+				} else {
+					r2[i] = v2
 				}
 			}
 
@@ -107,6 +141,13 @@ func verifyParm(parm interface{}, allowedTypes uint32) (interface{}, error) {
 	case []bson.D:
 		if allowedTypes&bsonDSliceAllowed != 0 {
 			return parm, nil
+		}
+
+		if allowedTypes&interfaceSliceAllowed != 0 {
+			r2 := make([]interface{}, len(p))
+			for i, v := range p {
+				r2[i] = (interface{})(v)
+			}
 		}
 	}
 
