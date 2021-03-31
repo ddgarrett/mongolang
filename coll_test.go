@@ -148,6 +148,9 @@ func TestInsertMany(t *testing.T) {
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
 	defer db.Disconnect()
 
+	// just in case, delete any existing documents
+	db.Coll("testCollection").DeleteMany(`{}`)
+
 	insertDocJSON := `[
 		{ "title": "The Polyglot Developer Podcast",
 		  "author": "Nic Raboy",
@@ -158,7 +161,8 @@ func TestInsertMany(t *testing.T) {
 			"tags": ["development", "programming", "coding"] },
 
 		{ "title": "The Polyglot Developer Podcas Version 3",
-			  "author": "Nic Raboy",
+			  "author": "Nic Raboy Jr.",
+			  "testCase": "Nic Raboy Jr. will not be deleted first time",
 			  "tags": ["development", "programming", "coding"] }
 	]`
 
@@ -173,15 +177,19 @@ func TestInsertMany(t *testing.T) {
 		t.Errorf("TestInsertMany only inserted %d docs", len(result.InsertedIDs))
 	}
 
-	/*
-		deleteResult := db.Coll("testCollection").DeleteOne(searchKey)
+	// Delete many for author Nic Raboy should delete 2, leaving 1 behind.
+	// Use deleteMany a second time to delete remaining document.
 
-		if db.Err != nil {
-			t.Errorf("TestInsertOne delete error %v", db.Err)
-		}
+	deleteResult := db.Coll("testCollection").DeleteMany(`{"author":"Nic Raboy"}`)
 
-		if deleteResult.DeletedCount != 1 {
-			t.Errorf("TestInsertOne delete count of %d", deleteResult.DeletedCount)
-		}
-	*/
+	if db.Err != nil {
+		t.Errorf("TestInsertOne delete error %v", db.Err)
+	}
+
+	if deleteResult.DeletedCount != 2 {
+		t.Errorf("TestInsertOne DeleteMany count of %d. Expected 2", deleteResult.DeletedCount)
+	}
+
+	// delete the remaining inserted document
+	db.Coll("testCollection").DeleteMany(`{"author":"Nic Raboy Jr."}`)
 }

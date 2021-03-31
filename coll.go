@@ -171,3 +171,21 @@ func (c *Coll) DeleteOne(filter interface{}, opts ...interface{}) *mongo.DeleteR
 
 	return result
 }
+
+// DeleteMany can delete many documents with one call as specified by the filter
+// TODO: implement delete options.
+func (c *Coll) DeleteMany(filter interface{}, opts ...interface{}) *mongo.DeleteResult {
+
+	deleteFilter, err := verifyParm(filter, bsonDAllowed|bsonMAllowed)
+	c.Err = err
+	c.DB.Err = c.Err
+	if c.Err != nil {
+		return &mongo.DeleteResult{}
+	}
+
+	result, deleteErr := c.MongoColl.DeleteMany(context.Background(), deleteFilter)
+	c.Err = deleteErr
+	c.DB.Err = c.Err
+
+	return result
+}
