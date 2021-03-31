@@ -22,8 +22,11 @@ func ExamplePrintStruct() {
 
 func TestVerifyParmsPart01(t *testing.T) {
 	bsonD := bson.D{{Key: "bsonDKey", Value: "bsonDValue"}}
+	bsonD2 := bson.D{{Key: "bsonDKey2", Value: "bsonDValue2"}}
 	bsonM := bson.M{"bsonMKey": "bsonMValue"}
-	// bsonA := bson.A{bsonD, bsonM}
+	bsonAVariedType := bson.A{bsonD, bsonM}
+	bsonADType := bson.A{bsonD, bsonD2}
+	bsonDSlice := []bson.D{bsonD, bsonD2}
 
 	const allowAD = bsonDAllowed | bsonAAllowed
 	// const allowDM = bsonDAllowed | bsonMAllowed
@@ -85,16 +88,50 @@ func TestVerifyParmsPart01(t *testing.T) {
 	parm, err = verifyParm(bsonM, bsonMAllowed)
 	_, okType = parm.(bson.M)
 	if parm == nil || err != nil || !okType {
-		t.Errorf("TestVerifyParms t089 parm: %v, type: %T, error: %v", parm, parm, err)
+		t.Errorf("TestVerifyParms t08 parm: %v, type: %T, error: %v", parm, parm, err)
 	}
 
 	// Test that verify bson.D slice works
-	bsonDSlice := []bson.D{}
 	parm, err = verifyParm(bsonDSlice, bsonDSliceAllowed)
 	_, okType = parm.([]bson.D)
 	if parm == nil || err != nil || !okType {
-		t.Errorf("TestVerifyParms t089 parm: %v, type: %T, error: %v", parm, parm, err)
+		t.Errorf("TestVerifyParms t09 parm: %v, type: %T, error: %v", parm, parm, err)
 	}
+
+	// Test that verify bson.D slice works when passed a bson.D
+	parm, err = verifyParm(bsonD, bsonDSliceAllowed)
+	_, okType = parm.([]bson.D)
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParms t10 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
+	// Test that verify interface slice works when passed a bson.D
+	parm, err = verifyParm(bsonD, interfaceSliceAllowed)
+	_, okType = parm.([]interface{})
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParms t11 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
+	// Test that verify bson.D slice works when passed a bson.A
+	parm, err = verifyParm(bsonADType, bsonDSliceAllowed)
+	_, okType = parm.([]bson.D)
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParms t12 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
+	// Test that invalid if bson.D slice allowed, but bson.A with bson.M passed
+	parm, err = verifyParm(bsonAVariedType, bsonDSliceAllowed)
+	if err == nil || !okType {
+		t.Errorf("TestVerifyParms t13 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
+	// Test that verify interface slice works when passed a bson.D slice
+	parm, err = verifyParm(bsonDSlice, interfaceSliceAllowed)
+	_, okType = parm.([]interface{})
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParms t14 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
 }
 
 func TestVerifyParmsNil(t *testing.T) {
@@ -123,10 +160,24 @@ func TestVerifyParmsNil(t *testing.T) {
 		t.Errorf("TestVerifyParmsNil t03 parm: %v, type: %T, error: %v", parm, parm, err)
 	}
 
+	// Test that verify []bson.D works
+	parm, err = verifyParm(nilParm, bsonDSliceAllowed)
+	_, okType = parm.([]bson.D)
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParmsNil t04 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
+	// Test that verify []interface{} works
+	parm, err = verifyParm(nilParm, interfaceSliceAllowed)
+	_, okType = parm.([]interface{})
+	if parm == nil || err != nil || !okType {
+		t.Errorf("TestVerifyParmsNil t04 parm: %v, type: %T, error: %v", parm, parm, err)
+	}
+
 	// Test that invalid nil parm is caught
 	parm, err = verifyParm(nilParm, 0)
-	if parm != nil || err == nil {
-		t.Errorf("TestVerifyParmsNil t04 parm: %v, type: %T, error: %v", parm, parm, err)
+	if err == nil {
+		t.Errorf("TestVerifyParmsNil t99 parm: %v, type: %T, error: %v", parm, parm, err)
 	}
 }
 
