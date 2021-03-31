@@ -142,3 +142,46 @@ func TestInsertOne(t *testing.T) {
 		t.Errorf("TestInsertOne delete count of %d", deleteResult.DeletedCount)
 	}
 }
+
+func TestInsertMany(t *testing.T) {
+	db := DB{}
+	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
+	defer db.Disconnect()
+
+	insertDocJSON := `[
+		{ "title": "The Polyglot Developer Podcast",
+		  "author": "Nic Raboy",
+		  "tags": ["development", "programming", "coding"] },
+
+		{ "title": "The Polyglot Developer Podcas Version 2",
+			"author": "Nic Raboy",
+			"tags": ["development", "programming", "coding"] },
+
+		{ "title": "The Polyglot Developer Podcas Version 3",
+			  "author": "Nic Raboy",
+			  "tags": ["development", "programming", "coding"] }
+	]`
+
+	result := db.Coll("testCollection").InsertMany(insertDocJSON)
+
+	if db.Err != nil {
+		t.Errorf("TestInsertMany insert error: %v", db.Err)
+		return
+	}
+
+	if len(result.InsertedIDs) != 3 {
+		t.Errorf("TestInsertMany only inserted %d docs", len(result.InsertedIDs))
+	}
+
+	/*
+		deleteResult := db.Coll("testCollection").DeleteOne(searchKey)
+
+		if db.Err != nil {
+			t.Errorf("TestInsertOne delete error %v", db.Err)
+		}
+
+		if deleteResult.DeletedCount != 1 {
+			t.Errorf("TestInsertOne delete count of %d", deleteResult.DeletedCount)
+		}
+	*/
+}

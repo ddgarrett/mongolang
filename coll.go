@@ -115,7 +115,7 @@ func (c *Coll) Aggregate(pipeline interface{}, parms ...interface{}) *Cursor {
 }
 
 // InsertOne inserts one document into the Collection.
-// Filter must be a bson.D or bson.M.
+// Document must be a bson.D or bson.M.
 // TODO: implement insert one options
 func (c *Coll) InsertOne(document interface{}, opts ...interface{}) *mongo.InsertOneResult {
 
@@ -127,6 +127,34 @@ func (c *Coll) InsertOne(document interface{}, opts ...interface{}) *mongo.Inser
 	}
 
 	result, insertErr := c.MongoColl.InsertOne(context.Background(), insertDocument)
+	c.Err = insertErr
+	c.DB.Err = c.Err
+
+	return result
+}
+
+// InsertMany inserts a slice of documents into a Collection.
+// Documents must be a slice or bson.A of bson.D documents
+// TODO: implement insert one options
+func (c *Coll) InsertMany(documents interface{}, opts ...interface{}) *mongo.InsertManyResult {
+
+	insertDocuments, parmErr := verifyParm(documents, bsonDSliceAllowed)
+	c.Err = parmErr
+	c.DB.Err = c.Err
+	if c.Err != nil {
+		return &mongo.InsertManyResult{}
+	}
+
+	// Convert a bson.D slice to an interface{} slice
+	// Shouldn't have to do this? There may be a better way to do this?
+	// TODO: incorporate this into verifyParm(...)
+	bd, _ := insertDocuments.([]bson.D)
+	iDocs := make([]interface{}, 0, len(bd))
+	for _, v := range bd {
+		iDocs = append(iDocs, v)
+	}
+
+	result, insertErr := c.MongoColl.InsertMany(context.Background(), iDocs)
 	c.Err = insertErr
 	c.DB.Err = c.Err
 
