@@ -50,6 +50,9 @@ go install go.mongodb.org/mongo-driver/bson
 go build go.mongodb.org/mongo-driver/mongo/options
 go install go.mongodb.org/mongo-driver/mongo/options
 
+go build go.mongodb.org/mongo-driver/bson/primitive
+go install go.mongodb.org/mongo-driver/bson/primitive
+
 go build github.com/ddgarrett/mongolang
 go install github.com/ddgarrett/mongolang
 
