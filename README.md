@@ -34,5 +34,7 @@ Combined with  [Jupyter Notebook and GopherNotes](https://github.com/gopherdata/
 
 There is a PDF demo of the use of MonGolang in Jupyter in this repo at [MonGolang_v0.2.1_Demo.pdf](https://github.com/ddgarrett/mongolang/blob/main/MonGolang_v0.2.1_Demo.pdf) 
 
+There is also a PDF demo of the changes in release v0.2.2, which included support for insert and delete MongoDB Shell commands as well as a `PrintBSON()` and support for extended JSON at [MonGolang_v0.2.2_Demo.pdf](https://github.com/ddgarrett/mongolang/blob/main/MonGolang_v0.2.2_Demo.pdf) 
+
 
 
