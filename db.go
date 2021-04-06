@@ -21,15 +21,17 @@ import (
 // cleans up any other resources, resetting the MonGolang structure
 func (mg *DB) Disconnect() {
 
-	mg.Err = nil
-
 	if mg.Client != nil {
 		if err := mg.Client.Disconnect(context.Background()); err != nil {
-			fmt.Printf("\n ***** Error disconnecting from MongoDB: %v \n", err)
+			if mg.Err == nil {
+				mg.Err = err
+			}
 		}
 	}
 
 	mg.Client = nil
+	mg.Database = nil
+	mg.Name = ""
 }
 
 // InitMonGolang initializes the connection
