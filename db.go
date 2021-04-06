@@ -43,6 +43,7 @@ func (mg *DB) InitMonGolang(connectionURI string) *DB {
 	mg.Client, mg.Err = mongo.NewClient(options.Client().ApplyURI(connectionURI))
 
 	if mg.Err != nil {
+		mg.Client = nil
 		return mg
 	}
 
@@ -56,9 +57,14 @@ func (mg *DB) InitMonGolang(connectionURI string) *DB {
 // Use connects the MongoDB Client to the specified Database.
 // The MonGolangDB needs to be inialized via mg.InitMonGolang() before calling this method.
 func (mg *DB) Use(dbName string) *DB {
+
+	// exit if already have error
+	if mg.Err != nil {
+		return mg
+	}
 	if mg.Client == nil {
 		mg.Err = errors.New("not connected to a MongoDB")
-		return nil
+		return mg
 	}
 
 	mg.Name = dbName
