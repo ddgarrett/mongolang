@@ -34,6 +34,34 @@ func (mg *DB) Disconnect() {
 	mg.Name = ""
 }
 
+// checkClient returns true if the mg.Client is okay
+func (mg *DB) checkClient() bool {
+	if mg.Client == nil {
+		if mg.Err == nil {
+			mg.Err = errors.New("not connected to a MongoDB")
+		}
+		return false
+	}
+
+	return true
+}
+
+// checkDB checks if the mg.Client and mg.Database
+// are properly initialized
+func (mg *DB) checkDB() bool {
+	if !mg.checkClient() {
+		return false
+	}
+
+	if mg.Database == nil {
+		if mg.Err == nil {
+			mg.Err = errors.New("not connected to a MongoDB Database")
+		}
+		return false
+	}
+	return true
+}
+
 // InitMonGolang initializes the connection
 // to the MongoDB Database
 func (mg *DB) InitMonGolang(connectionURI string) *DB {
@@ -51,39 +79,51 @@ func (mg *DB) InitMonGolang(connectionURI string) *DB {
 	ctx, ctxCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer ctxCancel()
 	mg.Err = mg.Client.Connect(ctx)
+
+	if mg.Err != nil {
+		mg.Client = nil
+	}
+
 	return mg
 }
 
 // Use connects the MongoDB Client to the specified Database.
-// The MonGolangDB needs to be inialized via mg.InitMonGolang() before calling this method.
+// The MonGolangDB needs to be inialized via mg.InitMonGolang()
+// before calling this method.
 func (mg *DB) Use(dbName string) *DB {
 
-	// exit if already have error
-	if mg.Err != nil {
-		return mg
-	}
-	if mg.Client == nil {
-		mg.Err = errors.New("not connected to a MongoDB")
+	// exit if we don't have a mg.Client
+	if !mg.checkClient() {
 		return mg
 	}
 
 	mg.Name = dbName
 	mg.Database = mg.Client.Database(dbName)
+	mg.Err = nil
 	return mg
 }
 
 // Coll returns a collection for a given name
+// If there was a previous error
+// don't set coll.MongoColl
 func (mg *DB) Coll(collectionName string) *Coll {
 	coll := new(Coll)
 	coll.DB = mg
 	coll.CollName = collectionName
+
+	// return if we don't have a Database or Client
+	if !mg.checkDB() {
+		coll.Err = mg.Err
+		return coll
+	}
+
 	coll.MongoColl = mg.Database.Collection(collectionName, nil)
 	return coll
 }
 
 // ShowDBs returns a list of Database Names
 func (mg *DB) ShowDBs() []string {
-	if mg.Client == nil {
+	if !mg.checkDB() {
 		var result []string
 		return result
 	}
