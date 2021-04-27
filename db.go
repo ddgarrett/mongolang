@@ -34,8 +34,8 @@ func (mg *DB) Disconnect() {
 	mg.Name = ""
 }
 
-// checkClient returns true if the mg.Client is okay
-func (mg *DB) checkClient() bool {
+// clientOkay returns true if the mg.Client is okay
+func (mg *DB) clientOkay() bool {
 	if mg.Client == nil {
 		if mg.Err == nil {
 			mg.Err = errors.New("not connected to a MongoDB")
@@ -46,10 +46,10 @@ func (mg *DB) checkClient() bool {
 	return true
 }
 
-// checkDB checks if the mg.Client and mg.Database
+// checkDBOkay checks if the mg.Client and mg.Database
 // are properly initialized
-func (mg *DB) checkDB() bool {
-	if !mg.checkClient() {
+func (mg *DB) dbOkay() bool {
+	if !mg.clientOkay() {
 		return false
 	}
 
@@ -92,8 +92,8 @@ func (mg *DB) InitMonGolang(connectionURI string) *DB {
 // before calling this method.
 func (mg *DB) Use(dbName string) *DB {
 
-	// exit if we don't have a mg.Client
-	if !mg.checkClient() {
+	// exit if we don't have an mg.Client
+	if !mg.clientOkay() {
 		return mg
 	}
 
@@ -112,7 +112,7 @@ func (mg *DB) Coll(collectionName string) *Coll {
 	coll.CollName = collectionName
 
 	// return if we don't have a Database or Client
-	if !mg.checkDB() {
+	if !mg.dbOkay() {
 		coll.Err = mg.Err
 		return coll
 	}
@@ -123,7 +123,7 @@ func (mg *DB) Coll(collectionName string) *Coll {
 
 // ShowDBs returns a list of Database Names
 func (mg *DB) ShowDBs() []string {
-	if !mg.checkDB() {
+	if !mg.dbOkay() {
 		var result []string
 		return result
 	}
