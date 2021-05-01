@@ -8,7 +8,6 @@ package mongolang
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -123,7 +122,7 @@ func (mg *DB) Coll(collectionName string) *Coll {
 
 // ShowDBs returns a list of Database Names
 func (mg *DB) ShowDBs() []string {
-	if !mg.dbOkay() {
+	if !mg.clientOkay() {
 		var result []string
 		return result
 	}
@@ -131,21 +130,18 @@ func (mg *DB) ShowDBs() []string {
 	databases, err := mg.Client.ListDatabaseNames(context.Background(), bson.M{})
 	mg.Err = err
 
-	if err != nil {
-		fmt.Printf("ShowDBs error: %v \n", err)
-	}
-
 	return databases
 }
 
 // ShowCollections returns a list of collections for current Database
 func (mg *DB) ShowCollections() []string {
+	if !mg.dbOkay() {
+		var result []string
+		return result
+	}
+
 	collections, err := mg.Database.ListCollectionNames(context.Background(), bson.M{})
 	mg.Err = err
-
-	if err != nil {
-		fmt.Printf("ShowCollections error: %v \n", err)
-	}
 
 	return collections
 }
