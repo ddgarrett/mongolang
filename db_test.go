@@ -9,16 +9,46 @@ func TestConnectAndDisconnect(t *testing.T) {
 
 	// error: not connected to DB
 	db.ShowDBs()
-	db.Use("quickstart")
+
+	if db.Err == nil {
+		t.Error("ShowDBs() on empty DB did not return error")
+	}
 
 	// connect and show DBs and collections
 	db.InitMonGolang("mongodb://localhost:27017")
+	result := db.ShowDBs()
 
-	db.ShowDBs()
-	db.Use("quickstart")
+	if db.Err != nil {
+		t.Errorf("Error on ShowDBs():  %+v", db.Err)
+	}
+
+	if len(result) == 0 {
+		t.Error("ShowDBs() returned empty string")
+	}
+
+	// try ShowCollections without specifying a DB
 	db.ShowCollections()
+	if db.Err == nil {
+		t.Error("Error on test of ShowCollections() before .Use(...)")
+	}
 
-	db.Coll("zips")
+	// try specifying a collection without having specified a DB
+	db.Coll(("zips"))
+	if db.Err == nil {
+		t.Error("Error on test of Coll() before .Use(...)")
+	}
+
+	// Complete test of ShowCollections
+	db.Use("quickstart")
+	result = db.ShowCollections()
+
+	if db.Err != nil {
+		t.Errorf("Error on ShowCollections():  %+v", db.Err)
+	}
+
+	if len(result) == 0 {
+		t.Error("ShowCollections() returned empty string")
+	}
 
 	db.Disconnect()
 
