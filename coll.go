@@ -31,7 +31,7 @@ func (c *Coll) Err() error {
 
 	if !c.collOkay() {
 		if c.DB == nil {
-			return errors.New("Collection not linked to a properly established DB")
+			return errors.New("collection not linked to a properly established db")
 		}
 	}
 
@@ -88,7 +88,6 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 
 	result := c.MongoColl.FindOne(context.Background(), filter, &findOneOptions)
 	c.DB.Err = result.Err()
-	err = result.Err()
 
 	document := bson.D{}
 	if result.Err() != nil {
