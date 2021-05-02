@@ -43,8 +43,6 @@ type Cursor struct {
 	IsClosed     bool
 	IsFindCursor bool
 
-	Err error
-
 	NextDoc *bson.D
 
 	Filter      interface{}

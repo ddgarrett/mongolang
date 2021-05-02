@@ -46,12 +46,47 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// cursorOkay if cursor is properly related to a Collection
+// and the Collection is okay.
+// NOTE that this does NOT specifically check that there
+// haven't been any errors.
+// To do that, check that Err() == nil.
+func (c *Cursor) cursorOkay() bool {
+
+	if c.Collection == nil {
+		return false
+	}
+
+	return c.Collection.collOkay()
+}
+
+// If there is an error, return it.
+// Else returns nil.
+func (c *Cursor) Err() error {
+	if !c.cursorOkay() {
+		if c.Collection == nil {
+			return errors.New("Cursor not linked to a properly established Collection")
+		}
+	}
+
+	return c.Collection.Err()
+}
+
+// setErr if this is a properly established cursor
+// and there isn't already an error.
+func (c *Cursor) setErr(err error) {
+	if c.cursorOkay() {
+		c.Collection.setErr(err)
+	}
+}
+
 // Close closes a cursor
 // Note that it's possible to reuse the cursor, though not recommended?
 func (c *Cursor) Close() error {
+	var err error
 	if !c.IsClosed {
 		if c.MongoCursor != nil {
-			c.Err = c.MongoCursor.Close(context.Background())
+			err = c.MongoCursor.Close(context.Background())
 			c.MongoCursor = nil
 		}
 
@@ -65,10 +100,10 @@ func (c *Cursor) Close() error {
 		c.AggrPipeline = nil
 		c.AggrOptions = options.AggregateOptions{}
 	} else {
-		c.Err = errors.New("Close called on already closed cursor")
+		err = errors.New("Close called on already closed cursor")
 	}
 
-	return c.Err
+	return err
 }
 
 // getMongoCursor ensures that we have an open MongoDB Cursor.
@@ -88,7 +123,6 @@ func (c *Cursor) getMongoCursor() error {
 
 		if err != nil {
 			c.Close()
-			c.Err = err
 			return err
 		}
 
@@ -125,12 +159,10 @@ func (c *Cursor) bufferNext() bool {
 		c.Close()
 		// Close will set c.Err
 		// Don't lose error from Decode call
-		c.Err = err
 		c.NextDoc = nil
 		return false
 	}
 
-	c.Err = nil
 	return true
 }
 
@@ -140,14 +172,17 @@ func (c *Cursor) bufferNext() bool {
 
 // Sort specifies the bson.D to be used to sort the cursor results
 func (c *Cursor) Sort(sortSequence interface{}) *Cursor {
-
+	var err error
 	if c.IsClosed {
-		c.Err = errors.New("Sort called on closed cursor")
+		c.setErr(errors.New("Sort called on closed cursor"))
 	} else if !c.IsFindCursor {
-		c.Err = errors.New("Sort called on aggregation cursor")
+		c.setErr(errors.New("Sort called on aggregation cursor"))
 		c.Close()
 	} else {
-		c.FindOptions.Sort, c.Err = verifyParm(sortSequence, (bsonDAllowed | bsonMAllowed))
+		c.FindOptions.Sort, err = verifyParm(sortSequence, (bsonDAllowed | bsonMAllowed))
+		if err != nil {
+			c.setErr(err)
+		}
 	}
 
 	return c
@@ -156,9 +191,9 @@ func (c *Cursor) Sort(sortSequence interface{}) *Cursor {
 // Skip specifies the number of documents to skip before returning the first document
 func (c *Cursor) Skip(skipCount int64) *Cursor {
 	if c.IsClosed {
-		c.Err = errors.New("Skip called on closed cursor")
+		c.setErr(errors.New("Skip called on closed cursor"))
 	} else if !c.IsFindCursor {
-		c.Err = errors.New("Skip called on aggregation cursor")
+		c.setErr(errors.New("Skip called on aggregation cursor"))
 		c.Close()
 	} else {
 		c.FindOptions.Skip = &skipCount
@@ -170,12 +205,11 @@ func (c *Cursor) Skip(skipCount int64) *Cursor {
 // Limit specifies the max number of documents to return
 func (c *Cursor) Limit(limitCount int64) *Cursor {
 	if c.IsClosed {
-		c.Err = errors.New("Limit called on closed cursor")
+		c.setErr(errors.New("Limit called on closed cursor"))
 	} else if !c.IsFindCursor {
-		c.Err = errors.New("Limit called on aggregation cursor")
+		c.setErr(errors.New("Limit called on aggregation cursor"))
 		c.Close()
 	} else {
-		c.Err = nil
 		c.FindOptions.Limit = &limitCount
 	}
 
@@ -192,7 +226,7 @@ func (c *Cursor) Limit(limitCount int64) *Cursor {
 func (c *Cursor) HasNext() bool {
 	if c.IsClosed {
 		c.NextDoc = nil
-		c.Err = errors.New("HasNext() called on closed cursor")
+		c.setErr(errors.New("HasNext() called on closed cursor"))
 		return false
 	}
 
@@ -207,14 +241,14 @@ func (c *Cursor) HasNext() bool {
 // TODO: allow a struct to be passed similar to cursor.ToArray(...)
 func (c *Cursor) Next() *bson.D {
 	if c.IsClosed {
-		c.Err = errors.New("Next() called on closed cursor")
+		c.setErr(errors.New("Next() called on closed cursor"))
 		return &bson.D{}
 	}
 
 	if c.NextDoc == nil {
 		hasNext := c.bufferNext()
 		if !hasNext {
-			c.Err = errors.New("Next() called when there isn't a next document")
+			c.setErr(errors.New("Next() called when there isn't a next document"))
 			return &bson.D{}
 		}
 	}
@@ -255,7 +289,7 @@ func (c *Cursor) ToArray(parm ...interface{}) []bson.D {
 	result := []bson.D{}
 
 	if c.IsClosed {
-		c.Err = errors.New("ToArray() called on closed cursor")
+		c.setErr(errors.New("ToArray() called on closed cursor"))
 		return result
 	}
 
@@ -273,7 +307,7 @@ func (c *Cursor) ToArray(parm ...interface{}) []bson.D {
 
 	c.MongoCursor = nil
 	c.Close()
-	c.Err = err
+	c.setErr(err)
 
 	return result
 }
