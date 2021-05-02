@@ -6,11 +6,47 @@ package mongolang
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// colOkay if Coll is properly linked to a DB
+// and the DB is okay.
+// NOTE that this does NOT specifically check that there
+// haven't been any errors.
+// To do that, check that Err() == nil.
+func (c *Coll) collOkay() bool {
+	if c.DB == nil || !c.DB.dbOkay() {
+		return false
+	}
+
+	return true
+}
+
+// Return any errors or nil if no error
+func (c *Coll) Err() error {
+
+	if !c.collOkay() {
+		if c.DB == nil {
+			return errors.New("Collection not linked to a properly established DB")
+		}
+	}
+
+	return c.DB.Err
+}
+
+// If we don't already have an error
+// set the error for the related DB.
+// This does ensure that we are properly linked
+// to a valid DB before trying to set the DB.Err.
+func (c *Coll) setErr(err error) {
+	if c.Err() == nil {
+		c.DB.Err = err
+	}
+}
 
 // NewCursor creates a new cursor for this collection
 func (c *Coll) NewCursor() *Cursor {
