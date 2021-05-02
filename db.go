@@ -112,7 +112,6 @@ func (mg *DB) Coll(collectionName string) *Coll {
 
 	// return if we don't have a Database or Client
 	if !mg.dbOkay() {
-		coll.Err = mg.Err
 		return coll
 	}
 

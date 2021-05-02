@@ -34,7 +34,6 @@ type Coll struct {
 	DB        *DB
 	MongoColl *mongo.Collection
 	CollName  string
-	Err       error
 }
 
 // Cursor represents a cursor for a Collection
