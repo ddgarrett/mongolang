@@ -193,3 +193,33 @@ func TestInsertMany(t *testing.T) {
 	// delete the remaining inserted document
 	db.Coll("testCollection").DeleteMany(`{"author":"Nic Raboy Jr."}`)
 }
+
+// TestErr tests various error conditions
+func TestErr(t *testing.T) {
+
+	// test for invalid connection
+	coll := &Coll{}
+
+	if coll.Err() != ErrInvalidColl {
+		t.Errorf("expected invalid collection error, got: %v", coll.Err())
+	}
+
+	// test FindOne() without specifying a DB to use first
+	db := DB{}
+	db.InitMonGolang("mongodb://localhost:27017")
+	defer db.Disconnect()
+	db.Coll("zips").FindOne()
+	if db.Err != ErrNotConnectedDB {
+		t.Errorf("expected ErrNotConnectedDB after FindOne, got: %v", db.Err)
+	}
+
+	// test for reset error in FindOne()
+	db.Use("quickstart")
+	coll = db.Coll("zips")
+	coll.setErr(ErrNotConnected)
+	coll.FindOne()
+
+	if coll.Err() != nil {
+		t.Errorf("expected nil error after FindOne, got: %v", coll.Err())
+	}
+}
