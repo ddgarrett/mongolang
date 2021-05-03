@@ -12,6 +12,8 @@ package mongolang
 */
 
 import (
+	"errors"
+
 	"go.mongodb.org/mongo-driver/bson"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,12 +31,17 @@ type DB struct {
 	Name     string
 }
 
+var ErrNotConnected = errors.New("not connected to a MongoDB")
+var ErrNotConnectedDB = errors.New("not connected to a MongoDB Database")
+
 // Coll represents a collection
 type Coll struct {
 	DB        *DB
 	MongoColl *mongo.Collection
 	CollName  string
 }
+
+var ErrInvalidColl = errors.New("collection not linked to a properly established db")
 
 // Cursor represents a cursor for a Collection
 type Cursor struct {

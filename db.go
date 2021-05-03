@@ -7,7 +7,6 @@ package mongolang
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -37,7 +36,7 @@ func (mg *DB) Disconnect() {
 func (mg *DB) clientOkay() bool {
 	if mg.Client == nil {
 		if mg.Err == nil {
-			mg.Err = errors.New("not connected to a MongoDB")
+			mg.Err = ErrNotConnected
 		}
 		return false
 	}
@@ -54,7 +53,7 @@ func (mg *DB) dbOkay() bool {
 
 	if mg.Database == nil {
 		if mg.Err == nil {
-			mg.Err = errors.New("not connected to a MongoDB Database")
+			mg.Err = ErrNotConnectedDB
 		}
 		return false
 	}
