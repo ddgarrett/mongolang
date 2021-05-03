@@ -6,7 +6,6 @@ package mongolang
 
 import (
 	"context"
-	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -31,7 +30,7 @@ func (c *Coll) Err() error {
 
 	if !c.collOkay() {
 		if c.DB == nil {
-			return errors.New("collection not linked to a properly established db")
+			return ErrInvalidColl
 		}
 	}
 
@@ -45,6 +44,14 @@ func (c *Coll) Err() error {
 func (c *Coll) setErr(err error) {
 	if c.Err() == nil {
 		c.DB.Err = err
+	}
+}
+
+// resetErrors resets any errors if the related
+// DB is okay.
+func (c *Coll) resetErrors() {
+	if c.collOkay() {
+		c.DB.Err = nil
 	}
 }
 
@@ -67,12 +74,19 @@ func (c *Coll) NewCursor() *Cursor {
 // 	parms[0] - query - bson.M or bson.D defines of which documents to select
 //  parms[1] - projection - bson.M or bson.D defines which fields to retrieve
 func (c *Coll) FindOne(parms ...interface{}) *bson.D {
+
+	if !c.collOkay() {
+		return &bson.D{}
+	}
+
+	c.resetErrors()
+
 	var filter interface{}
 	var err error
 
 	if len(parms) > 0 {
 		filter, err = verifyParm(parms[0], bsonDAllowed|bsonMAllowed)
-		c.DB.Err = err
+		c.setErr(err)
 		if err != nil {
 			return &bson.D{}
 		}
@@ -83,11 +97,14 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 	findOneOptions := options.FindOneOptions{}
 	if len(parms) > 1 {
 		findOneOptions.Projection, err = verifyParm(parms[1], (bsonDAllowed | bsonMAllowed))
-		c.DB.Err = err
+		c.setErr(err)
+		if err != nil {
+			return &bson.D{}
+		}
 	}
 
 	result := c.MongoColl.FindOne(context.Background(), filter, &findOneOptions)
-	c.DB.Err = result.Err()
+	c.setErr(err)
 
 	document := bson.D{}
 	if result.Err() != nil {
@@ -111,14 +128,18 @@ func (c *Coll) Find(parms ...interface{}) *Cursor {
 	result.IsFindCursor = true
 	result.IsClosed = false
 
+	if !c.collOkay() {
+		return result
+	}
+
+	c.resetErrors()
+
 	if len(parms) > 0 {
 		result.Filter, err = verifyParm(parms[0], (bsonDAllowed | bsonMAllowed))
-		c.DB.Err = err
+		c.setErr(err)
 		if err != nil {
-			// will cause a later error
-			// if Find() is chained
-			// or c.Err/c.DB.Err is not checked
-			return nil
+			result.Filter = bson.D{}
+			return result
 		}
 	} else {
 		result.Filter = bson.D{}
@@ -126,7 +147,7 @@ func (c *Coll) Find(parms ...interface{}) *Cursor {
 
 	if len(parms) > 1 {
 		result.FindOptions.Projection, err = verifyParm(parms[1], (bsonDAllowed | bsonMAllowed))
-		c.DB.Err = err
+		c.setErr(err)
 	}
 
 	return result
@@ -147,8 +168,14 @@ func (c *Coll) Aggregate(pipeline interface{}, parms ...interface{}) *Cursor {
 	result.IsFindCursor = false
 	result.IsClosed = false
 
+	if !c.collOkay() {
+		return result
+	}
+
+	c.resetErrors()
+
 	result.AggrPipeline, err = verifyParm(pipeline, (bsonAAllowed | bsonDSliceAllowed))
-	c.DB.Err = err
+	c.setErr(err)
 
 	return result
 }
@@ -157,6 +184,11 @@ func (c *Coll) Aggregate(pipeline interface{}, parms ...interface{}) *Cursor {
 // Document must be a bson.D or bson.M.
 // TODO: implement insert one options
 func (c *Coll) InsertOne(document interface{}, opts ...interface{}) *mongo.InsertOneResult {
+	if !c.collOkay() {
+		return &mongo.InsertOneResult{}
+	}
+
+	c.resetErrors()
 
 	insertDocument, err := verifyParm(document, bsonDAllowed|bsonMAllowed)
 	c.DB.Err = err
@@ -174,6 +206,11 @@ func (c *Coll) InsertOne(document interface{}, opts ...interface{}) *mongo.Inser
 // Documents must be a slice or bson.A of bson.D documents
 // TODO: implement insert one options
 func (c *Coll) InsertMany(documents interface{}, opts ...interface{}) *mongo.InsertManyResult {
+	if !c.collOkay() {
+		return &mongo.InsertManyResult{}
+	}
+
+	c.resetErrors()
 
 	insertDocuments, parmErr := verifyParm(documents, interfaceSliceAllowed)
 	c.DB.Err = parmErr
@@ -192,6 +229,11 @@ func (c *Coll) InsertMany(documents interface{}, opts ...interface{}) *mongo.Ins
 // single document but only one document will be deleted.
 // TODO: implement delete options.
 func (c *Coll) DeleteOne(filter interface{}, opts ...interface{}) *mongo.DeleteResult {
+	if !c.collOkay() {
+		return &mongo.DeleteResult{}
+	}
+
+	c.resetErrors()
 
 	deleteFilter, err := verifyParm(filter, bsonDAllowed|bsonMAllowed)
 	c.DB.Err = err
@@ -208,6 +250,11 @@ func (c *Coll) DeleteOne(filter interface{}, opts ...interface{}) *mongo.DeleteR
 // DeleteMany can delete many documents with one call as specified by the filter
 // TODO: implement delete options.
 func (c *Coll) DeleteMany(filter interface{}, opts ...interface{}) *mongo.DeleteResult {
+	if !c.collOkay() {
+		return &mongo.DeleteResult{}
+	}
+
+	c.resetErrors()
 
 	deleteFilter, err := verifyParm(filter, bsonDAllowed|bsonMAllowed)
 	c.DB.Err = err
