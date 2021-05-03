@@ -10,8 +10,8 @@ func TestConnectAndDisconnect(t *testing.T) {
 	// error: not connected to DB
 	db.ShowDBs()
 
-	if db.Err == nil {
-		t.Error("ShowDBs() on empty DB did not return error")
+	if db.Err != ErrNotConnected {
+		t.Errorf("expected ErrNotConnected, got: %v", db.Err)
 	}
 
 	// connect and show DBs and collections
@@ -28,8 +28,8 @@ func TestConnectAndDisconnect(t *testing.T) {
 
 	// try ShowCollections without specifying a DB
 	db.ShowCollections()
-	if db.Err == nil {
-		t.Error("Error on test of ShowCollections() before .Use(...)")
+	if db.Err != ErrNotConnectedDB {
+		t.Errorf("expected ErrNotConnectedDB, got: %v", db.Err)
 	}
 
 	// try specifying a collection without having specified a DB
