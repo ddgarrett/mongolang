@@ -72,7 +72,7 @@ func (c *Cursor) Err() error {
 	return c.Collection.Err()
 }
 
-func (c *Cursor) requireOpenFindCursor() bool {
+func (c *Cursor) requireOpenCursor() bool {
 	var err = c.Err()
 
 	if err != nil {
@@ -82,12 +82,17 @@ func (c *Cursor) requireOpenFindCursor() bool {
 	if c.IsClosed {
 		c.setErr(ErrClosedCursor)
 		return false
-	} else if !c.IsFindCursor {
-		c.setErr(ErrNotFindCursor)
-		return false
 	}
 
 	return true
+}
+func (c *Cursor) requireOpenFindCursor() bool {
+	if c.requireOpenCursor() && c.IsFindCursor {
+		return true
+	}
+
+	c.setErr(ErrNotFindCursor)
+	return false
 }
 
 // setErr if this is a properly established cursor
@@ -228,7 +233,7 @@ func (c *Cursor) Limit(limitCount int64) *Cursor {
 
 // HasNext returns true if the cursor has a next document available.
 func (c *Cursor) HasNext() bool {
-	if !c.requireOpenFindCursor() {
+	if !c.requireOpenCursor() {
 		c.NextDoc = nil
 		return false
 	}
@@ -243,7 +248,7 @@ func (c *Cursor) HasNext() bool {
 // Next returns the next document for the cursor as a bson.D struct.
 // TODO: allow a struct to be passed similar to cursor.ToArray(...)
 func (c *Cursor) Next() *bson.D {
-	if !c.requireOpenFindCursor() {
+	if !c.requireOpenCursor() {
 		return &bson.D{}
 	}
 
@@ -290,7 +295,7 @@ func (c *Cursor) ForEach(f func(*bson.D)) {
 func (c *Cursor) ToArray(parm ...interface{}) []bson.D {
 	result := []bson.D{}
 
-	if !c.requireOpenFindCursor() {
+	if !c.requireOpenCursor() {
 		return result
 	}
 
@@ -315,12 +320,20 @@ func (c *Cursor) ToArray(parm ...interface{}) []bson.D {
 
 // Count returns a count of the (remaining) documents for the cursor.
 func (c *Cursor) Count() int {
+	if !c.requireOpenCursor() {
+		return 0
+	}
 	return len(c.ToArray())
 }
 
 // Pretty returns a pretty string version of the remaining documents for a cursor.
 // Unlike String() it shows the bson.D as key:value instead of {Key:key Value:value}
 func (c *Cursor) Pretty() string {
+
+	if !c.requireOpenCursor() {
+		return ""
+	}
+
 	var buf bytes.Buffer
 	docs := c.ToArray()
 
