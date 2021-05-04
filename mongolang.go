@@ -58,3 +58,7 @@ type Cursor struct {
 	AggrPipeline interface{}
 	AggrOptions  options.AggregateOptions
 }
+
+var ErrInvalidCursor = errors.New("cursor not linked to a properly established collection")
+var ErrClosedCursor = errors.New("call made to closed cursor for a method that requires an open cursor")
+var ErrNotFindCursor = errors.New("method call requires a Find() cursor")
