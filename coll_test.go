@@ -212,7 +212,7 @@ func TestErr(t *testing.T) {
 		t.Errorf("expected invalid collection error, got: %v", coll.Err())
 	}
 
-	// test FindOne() without specifying a DB to use first
+	// test FindOne(), etc. without specifying a DB to use first
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017")
 	defer db.Disconnect()
@@ -238,7 +238,6 @@ func TestErr(t *testing.T) {
 	db.Coll("testCollection").DeleteMany("{}")
 	testErrNotConnectedDB(db, t, "DeleteMany()")
 
-	// test Find(), Aggregate(),
 	// test for reset error in FindOne()
 	db.Use("quickstart")
 	coll = db.Coll("zips")
