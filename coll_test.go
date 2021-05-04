@@ -194,6 +194,14 @@ func TestInsertMany(t *testing.T) {
 	db.Coll("testCollection").DeleteMany(`{"author":"Nic Raboy Jr."}`)
 }
 
+// dbTest tests that we received the expected error from a call
+// where the DB is not connected
+func testErrNotConnectedDB(db DB, t *testing.T, f string) {
+	if db.Err != ErrNotConnectedDB {
+		t.Errorf("expected ErrNotConnectedDB after %s, got: %v", f, db.Err)
+	}
+}
+
 // TestErr tests various error conditions
 func TestErr(t *testing.T) {
 
@@ -208,11 +216,29 @@ func TestErr(t *testing.T) {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017")
 	defer db.Disconnect()
-	db.Coll("zips").FindOne()
-	if db.Err != ErrNotConnectedDB {
-		t.Errorf("expected ErrNotConnectedDB after FindOne, got: %v", db.Err)
-	}
 
+	db.Coll("zips").FindOne()
+	testErrNotConnectedDB(db, t, "FindOne()")
+
+	db.Coll("zips").Find()
+	testErrNotConnectedDB(db, t, "Find()")
+
+	db.Coll("zips").Aggregate("[]")
+	testErrNotConnectedDB(db, t, "Aggregate()")
+
+	db.Coll("testCollection").InsertOne("{}")
+	testErrNotConnectedDB(db, t, "InsertOne()")
+
+	db.Coll("testCollection").InsertMany("[]")
+	testErrNotConnectedDB(db, t, "InsertMany()")
+
+	db.Coll("testCollection").DeleteOne("{}")
+	testErrNotConnectedDB(db, t, "DeleteOne()")
+
+	db.Coll("testCollection").DeleteMany("{}")
+	testErrNotConnectedDB(db, t, "DeleteMany()")
+
+	// test Find(), Aggregate(),
 	// test for reset error in FindOne()
 	db.Use("quickstart")
 	coll = db.Coll("zips")
