@@ -107,6 +107,14 @@ func TestInsertOne(t *testing.T) {
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
 	defer db.Disconnect()
 
+	// test invalid insert document type
+	db.Coll("testCollection").InsertOne(bson.A{})
+
+	if db.Err == nil {
+		t.Error("TestInsertOne with invalid document type expected error")
+	}
+
+	// test insert of valid document
 	insertDocJSON := `{
 		"title": "The Polyglot Developer Podcast",
 		"author": "Nic Raboy",
@@ -147,6 +155,13 @@ func TestInsertMany(t *testing.T) {
 	db := DB{}
 	db.InitMonGolang("mongodb://localhost:27017").Use("quickstart")
 	defer db.Disconnect()
+
+	// test insert of invalid document
+	db.Coll("testCollection").InsertMany(`a`)
+
+	if db.Err == nil {
+		t.Error("TestInsertMany insert of invalid JSON expected error")
+	}
 
 	// just in case, delete any existing documents
 	db.Coll("testCollection").DeleteMany(`{}`)
@@ -247,4 +262,49 @@ func TestErr(t *testing.T) {
 	if coll.Err() != nil {
 		t.Errorf("expected nil error after FindOne, got: %v", coll.Err())
 	}
+
+	// test FindOneErrors
+	coll.FindOne(bson.A{})
+	if coll.Err() == nil {
+		t.Error("expected error after FindOne() with bson.A{} filter")
+	}
+
+	coll.FindOne(bson.M{}, bson.A{})
+	if coll.Err() == nil {
+		t.Error("expected error after FindOne() with bson.A{} options")
+	}
+
+	coll.FindOne(`{"zipCode":{"$$$invalid":0}}}`)
+	if coll.Err() == nil {
+		t.Error("expected error after FindOne() with invalid filter")
+	}
+
+	// test Find() errors
+	coll.Find(bson.A{})
+	if coll.Err() == nil {
+		t.Error("expected error after Find() with bson.A{} filter")
+	}
+
+	coll.Find(bson.M{}, bson.A{})
+	if coll.Err() == nil {
+		t.Error("expected error after Find() with bson.A{} options")
+	}
+
+	// test that find works okay without any parms
+	coll.Find()
+	if coll.Err() != nil {
+		t.Errorf("expected nil error after Find() without parms, got %v", coll.Err())
+	}
+
+	// test delete with invalid filter
+	db.Coll("testCollection").DeleteOne(bson.A{})
+	if db.Err == nil {
+		t.Error("DeleteOne with invalid filter JSON expected error")
+	}
+
+	db.Coll("testCollection").DeleteMany(`a`)
+	if db.Err == nil {
+		t.Error("DeleteMany with invalid filter JSON expected error")
+	}
+
 }
