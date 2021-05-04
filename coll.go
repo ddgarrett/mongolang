@@ -104,7 +104,7 @@ func (c *Coll) FindOne(parms ...interface{}) *bson.D {
 	}
 
 	result := c.MongoColl.FindOne(context.Background(), filter, &findOneOptions)
-	c.setErr(err)
+	c.setErr(result.Err())
 
 	document := bson.D{}
 	if result.Err() != nil {
