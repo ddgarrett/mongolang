@@ -7,7 +7,9 @@ go test ./...
 
 then "git fetch" to get new tag
 
-
+## Backup current gophernotes docker container 
+##  - change mongolang version number in "v0.2.2"
+docker commit a7487f64634a backup-gopher:v0.2.2
 
 # gophernotes DS not using modules?
 
