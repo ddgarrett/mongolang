@@ -1,4 +1,5 @@
 // make sure hello.go has latest version number in source
+// Also update to hello_test.go for new version
 // make sure local MongoDB is running before running tests
 
 cd mongolang/
