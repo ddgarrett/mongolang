@@ -1,7 +1,9 @@
 // make sure hello.go has latest version number in source
+// make sure local MongoDB is running before running tests
 
+cd mongolang/
 go mod tidy
-go test ./...
+go test .
 
 // Use github "create a new release" link under "Releases" on right side of window.
 
