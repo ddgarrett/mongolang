@@ -7,10 +7,6 @@ go test ./...
 
 then "git fetch" to get new tag
 
-## Backup current gophernotes docker container 
-##  - change mongolang version number in "v0.2.2"
-docker commit a7487f64634a backup-gopher:v0.2.2
-
 # gophernotes DS not using modules?
 
 # in gophernotes... 
@@ -58,4 +54,11 @@ go install go.mongodb.org/mongo-driver/bson/primitive
 go build github.com/ddgarrett/mongolang
 go install github.com/ddgarrett/mongolang
 
+## Test out new build before doing backup below
+## REMEMBER that IF you run another version before doing backup
+## you'll have to redo much of the work above
+
+## Backup current gophernotes docker container 
+##  - change mongolang version number in "v0.2.2"
+docker commit a7487f64634a backup-gopher:v0.2.2
 
